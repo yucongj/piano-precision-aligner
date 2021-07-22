@@ -24,11 +24,10 @@ SimpleHMM::SimpleHMM(AudioToScoreAligner& aligner) : m_aligner{aligner}
     State* tail = &m_startingState;
 
     // specify the starting state
-    //m_startingState.eventIndex = -1;
-    //m_startingState.microIndex = 0;
     double p = 0.975; // self-loop
     double tailProb  = 1 - p; // leaving the micro state
     m_startingState.nextStates[&m_startingState] = p;
+    m_startingState.prevStates[&m_startingState] = p;
     //std::cout << "tail:" << State::toString(*tail) << '\n';
 
     // add micro states for each event
@@ -44,13 +43,14 @@ SimpleHMM::SimpleHMM(AudioToScoreAligner& aligner) : m_aligner{aligner}
         for (int m = 0; m < M; m++) {
             // add a state
             State* newState = new State(eventIndex, m);
-            //newState->eventIndex = eventIndex;
-            //newState->microIndex = m;
             newState->nextStates[newState] = p; // self-loop
+            newState->prevStates[newState] = p; // self-loop
             if (m == 0) {
                 tail->nextStates[newState] = tailProb;
+                newState->prevStates[tail] = tailProb;
             } else {
                 tail->nextStates[newState] = 1-p; // leave state
+                newState->prevStates[tail] = 1-p;
             }
             tail = newState;
         }
@@ -60,18 +60,19 @@ SimpleHMM::SimpleHMM(AudioToScoreAligner& aligner) : m_aligner{aligner}
 
     // add the ending state
     State* lastState = new State(-2, 0);
-    //lastState->eventIndex = -2;
-    //lastState->microIndex = 0;
     lastState->nextStates[lastState] = 1.;
+    lastState->prevStates[lastState] = 1.;
     tail->nextStates[lastState] = tailProb;
+    lastState->prevStates[tail] = tailProb;
 
     // test:
-    /*
+/*
     State *current = &m_startingState;
     while (current->nextStates.size() > 0) {
         std::cout << "event/microIndex= " << current->eventIndex <<"/"<< current->microIndex<< '\n';
         for (auto& p : current->nextStates) {
-            std::cout << p.first->eventIndex <<"/"<< p.first->microIndex<< "\t" << p.second << '\n';
+            //std::cout << p.first->eventIndex <<"/"<< p.first->microIndex<< "\t" << p.second << '\n';
+            std::cout << State::toString(*p.first) << '\n';
         }
         if (current->nextStates.size() < 2) break;
         for (auto& q: current->nextStates) {
@@ -82,7 +83,7 @@ SimpleHMM::SimpleHMM(AudioToScoreAligner& aligner) : m_aligner{aligner}
         }
 
     }
-    */
+*/
 }
 
 SimpleHMM::~SimpleHMM()
