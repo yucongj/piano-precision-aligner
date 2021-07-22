@@ -12,6 +12,7 @@
 
 using std::vector;
 using std::pair;
+using std::unordered_map;
 
 
 class SimpleHMM
@@ -32,6 +33,10 @@ public:
             string ss = to_string(s.eventIndex) + "\t" + to_string(s.microIndex);
             for (auto& p : s.nextStates) {
                 ss += "\t next: " + to_string(p.first->eventIndex) +
+                 " " + to_string(p.first->microIndex) + " " + to_string(p.second);
+            }
+            for (auto& p : s.prevStates) {
+                ss += "\t prev: " + to_string(p.first->eventIndex) +
                  " " + to_string(p.first->microIndex) + " " + to_string(p.second);
             }
             return ss;
@@ -62,7 +67,7 @@ public:
     typedef State StateGraph; // Starting State (eventIndex = -1)
 
     struct Hypothesis {
-        const State& state;
+        const State& state; // TODO: ?
         double prob; // might be in log
         Hypothesis(const State& s, double p) : state{s}, prob{p} { }
 

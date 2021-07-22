@@ -6,8 +6,6 @@
 
 #include <cmath>
 
-using std::make_pair;
-
 static const int BEAM_SEARCH_WIDTH = 200;
 
 SimpleHMM::SimpleHMM(AudioToScoreAligner& aligner) : m_aligner{aligner}
@@ -30,7 +28,7 @@ SimpleHMM::SimpleHMM(AudioToScoreAligner& aligner) : m_aligner{aligner}
     //m_startingState.microIndex = 0;
     double p = 0.975; // self-loop
     double tailProb  = 1 - p; // leaving the micro state
-    m_startingState.nextStates.push_back(make_pair(&m_startingState, p));
+    m_startingState.nextStates[&m_startingState] = p;
     //std::cout << "tail:" << State::toString(*tail) << '\n';
 
     // add micro states for each event
@@ -48,11 +46,11 @@ SimpleHMM::SimpleHMM(AudioToScoreAligner& aligner) : m_aligner{aligner}
             State* newState = new State(eventIndex, m);
             //newState->eventIndex = eventIndex;
             //newState->microIndex = m;
-            newState->nextStates.push_back(make_pair(newState, p)); // self-loop
+            newState->nextStates[newState] = p; // self-loop
             if (m == 0) {
-                tail->nextStates.push_back(make_pair(newState, tailProb));
+                tail->nextStates[newState] = tailProb;
             } else {
-                tail->nextStates.push_back(make_pair(newState, 1-p)); // leave state
+                tail->nextStates[newState] = 1-p; // leave state
             }
             tail = newState;
         }
@@ -64,8 +62,8 @@ SimpleHMM::SimpleHMM(AudioToScoreAligner& aligner) : m_aligner{aligner}
     State* lastState = new State(-2, 0);
     //lastState->eventIndex = -2;
     //lastState->microIndex = 0;
-    lastState->nextStates.push_back(make_pair(lastState, 1.));
-    tail->nextStates.push_back(make_pair(lastState, tailProb));
+    lastState->nextStates[lastState] = 1.;
+    tail->nextStates[lastState] = tailProb;
 
     // test:
     /*
@@ -76,7 +74,13 @@ SimpleHMM::SimpleHMM(AudioToScoreAligner& aligner) : m_aligner{aligner}
             std::cout << p.first->eventIndex <<"/"<< p.first->microIndex<< "\t" << p.second << '\n';
         }
         if (current->nextStates.size() < 2) break;
-        current = current->nextStates[1].first;
+        for (auto& q: current->nextStates) {
+            if (q.first != current) {
+                current = q.first;
+                break;
+            }
+        }
+
     }
     */
 }
@@ -90,10 +94,6 @@ SimpleHMM::~SimpleHMM()
 AudioToScoreAligner::AlignmentResults SimpleHMM::getAlignmentResults()
 {
     AudioToScoreAligner::AlignmentResults results;
-    vector<vector<Hypothesis>>* forward;
-    getForwardProbs(forward, m_aligner, m_startingState);
-    vector<vector<Hypothesis>>* backward;
-    getBackwardProbs(backward, m_aligner, m_startingState);
 
     return results;
 }
