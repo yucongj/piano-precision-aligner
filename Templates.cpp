@@ -11,9 +11,9 @@
 
 
 
-static const int LOW_MIDI = 21; // Should this be static as well? Maybe should be in .h?
-static const int HIGH_MIDI = 108; // Should this be static as well? Maybe should be in .h?
-static const int MAX_HARMONICS_COUNT = 16; // Should this be static as well?
+static const int LOW_MIDI = 21;
+static const int HIGH_MIDI = 108;
+static const int MAX_HARMONICS_COUNT = 16;
 
 static float peakFunction(float x) { // MAY CHANGE THIS FUNCTION LATER
     return exp(-0.5*x*x);

@@ -11,7 +11,6 @@
 #include <unordered_map>
 
 using std::vector;
-using std::pair;
 using std::unordered_map;
 
 
@@ -26,10 +25,12 @@ public:
         int microIndex; // index of this microstate within the event
         unordered_map<State*, double> nextStates; // value is the transition prob
         unordered_map<State*, double> prevStates;
+        // careful about using pointers as keys.
+        // unordered_map<pair<event, micro>, double> nextStates;
 
         State(int e, int m) : eventIndex{e}, microIndex{m} { }
 
-        static string toString(State s) {
+        static string toString(const State& s) {
             string ss = to_string(s.eventIndex) + "\t" + to_string(s.microIndex);
             for (auto& p : s.nextStates) {
                 ss += "\t next: " + to_string(p.first->eventIndex) +
@@ -67,9 +68,17 @@ public:
     typedef State StateGraph; // Starting State (eventIndex = -1)
 
     struct Hypothesis {
-        const State& state; // TODO: ?
+        const State* state; // TODO: ? How does "copy" work here?
         double prob; // might be in log
-        Hypothesis(const State& s, double p) : state{s}, prob{p} { }
+        Hypothesis(const State* s, double p) : state{s}, prob{p} { }
+        Hypothesis(const Hypothesis& h) : state{h.state}, prob{h.prob} { }
+        // Design assignment operator
+
+        Hypothesis& operator=(const Hypothesis& other) {
+            state = other.state;
+            prob = other.prob;
+            return *this;
+        }
 
         bool operator==(const Hypothesis &other) const {
             if (state == other.state && prob == other.prob)
@@ -81,12 +90,16 @@ public:
         bool operator<(const Hypothesis& other) const {
             if (prob < other.prob)  return true;
             else if (prob > other.prob) return false;
-            // equal prob:
-            return state < other.state;
+            return *state < *other.state;
         }
 
         bool operator>(const Hypothesis& other) const {
             return !( (*this < other) || (*this == other) );
+        }
+
+        static string toString(const Hypothesis& h) {
+            string ss = to_string(h.prob);
+            return ss + ":\t" + State::toString(*h.state);;
         }
     };
 
@@ -94,7 +107,7 @@ public:
 
 private:
     AudioToScoreAligner m_aligner;
-    StateGraph m_startingState = State(-1, 0); // YJ: Is there a better way?
+    StateGraph* m_startingState;
 };
 
 #endif

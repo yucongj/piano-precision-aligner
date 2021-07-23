@@ -17,7 +17,6 @@ typedef map<int, Template> NoteTemplates; // key is midi
 
 struct CreateNoteTemplates {
     static const NoteTemplates& getNoteTemplates(float sampleRate, int blockSize);
-    //Does the "const" guarantee that the returned note templates are read-only?
 };
 
 /*
