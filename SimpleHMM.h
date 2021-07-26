@@ -8,10 +8,9 @@
 #include "AudioToScoreAligner.h"
 
 #include <vector>
-#include <unordered_map>
+#include <map>
 
 using std::vector;
-using std::unordered_map;
 
 
 class SimpleHMM
@@ -23,27 +22,14 @@ public:
     struct State {
         int eventIndex; // -1 means before first event; -2 means after last event
         int microIndex; // index of this microstate within the event
-        unordered_map<State*, double> nextStates; // value is the transition prob
-        unordered_map<State*, double> prevStates;
+        //unordered_map<State*, double> nextStates; // value is the transition prob
+        //unordered_map<State*, double> prevStates;
         // careful about using pointers as keys.
         // unordered_map<pair<event, micro>, double> nextStates;
 
         State(int e, int m) : eventIndex{e}, microIndex{m} { }
+        State(const State& s) : eventIndex{s.eventIndex}, microIndex{s.microIndex} { }
 
-        static string toString(const State& s) {
-            string ss = to_string(s.eventIndex) + "\t" + to_string(s.microIndex);
-            for (auto& p : s.nextStates) {
-                ss += "\t next: " + to_string(p.first->eventIndex) +
-                 " " + to_string(p.first->microIndex) + " " + to_string(p.second);
-            }
-            for (auto& p : s.prevStates) {
-                ss += "\t prev: " + to_string(p.first->eventIndex) +
-                 " " + to_string(p.first->microIndex) + " " + to_string(p.second);
-            }
-            return ss;
-        }
-
-        // Ignore nextStates when comparing.
         bool operator==(const State &other) const {
             if (eventIndex == other.eventIndex && microIndex == other.microIndex)
                 return true;
@@ -63,14 +49,29 @@ public:
         bool operator>(const State& other) const {
             return !( (*this < other) || (*this == other) );
         }
+
+        static string toString(const State& s) {
+            string ss = to_string(s.eventIndex) + "\t" + to_string(s.microIndex);
+            /*
+            for (auto& p : s.nextStates) {
+                ss += "\t next: " + to_string(p.first->eventIndex) +
+                 " " + to_string(p.first->microIndex) + " " + to_string(p.second);
+            }
+            for (auto& p : s.prevStates) {
+                ss += "\t prev: " + to_string(p.first->eventIndex) +
+                 " " + to_string(p.first->microIndex) + " " + to_string(p.second);
+            }
+            */
+            return ss;
+        }
     };
 
-    typedef State StateGraph; // Starting State (eventIndex = -1)
+    //typedef State StateGraph; // Starting State (eventIndex = -1)
 
     struct Hypothesis {
-        const State* state; // TODO: ? How does "copy" work here?
+        State state;
         double prob; // might be in log
-        Hypothesis(const State* s, double p) : state{s}, prob{p} { }
+        Hypothesis(const State& s, double p) : state{s}, prob{p} { }
         Hypothesis(const Hypothesis& h) : state{h.state}, prob{h.prob} { }
         // Design assignment operator
 
@@ -90,7 +91,7 @@ public:
         bool operator<(const Hypothesis& other) const {
             if (prob < other.prob)  return true;
             else if (prob > other.prob) return false;
-            return *state < *other.state;
+            return state < other.state;
         }
 
         bool operator>(const Hypothesis& other) const {
@@ -99,15 +100,17 @@ public:
 
         static string toString(const Hypothesis& h) {
             string ss = to_string(h.prob);
-            return ss + ":\t" + State::toString(*h.state);;
+            return ss + ":\t" + State::toString(h.state);;
         }
     };
 
     AudioToScoreAligner::AlignmentResults getAlignmentResults();
+    const map<State, map<State, double>>& getNextStates() const;
 
 private:
     AudioToScoreAligner m_aligner;
-    StateGraph* m_startingState;
+    map<State, map<State, double>> m_nextStates; // value is <next state, trans prob>
+    map<State, map<State, double>> m_prevStates; // value is <prev state, trans prob>
 };
 
 #endif
