@@ -60,6 +60,7 @@ double AudioToScoreAligner::getLikelihood(int frame, int event)
         features are not supplied." << '\n';
     }
     // TODO: check the range for frame and event
+    // TODO: if (frame < 0) use a different template
     if (!m_likelihoods[frame][event].calculated) {
         const Score::MusicalEventList& eventList = m_score.getMusicalEvents();
         double score = 0;

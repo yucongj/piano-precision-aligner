@@ -100,15 +100,21 @@ SimpleHMM::~SimpleHMM()
 {
 }
 
+/*
 const map<State, map<State, double>>& SimpleHMM::getNextStates() const
 {
     return m_nextStates;
 }
 
-static void getForwardProbs(vector<vector<Hypothesis>>* forward,
-    AudioToScoreAligner& aligner, SimpleHMM* self) {
+const map<State, map<State, double>>& SimpleHMM::getPrevStates() const
+{
+    return m_prevStates;
+}
+*/
 
-        const map<State, map<State, double>>& nextStates = self->getNextStates();
+static void getForwardProbs(vector<vector<Hypothesis>>* forward,
+    AudioToScoreAligner& aligner, const map<State, map<State, double>>& nextStates) {
+
         int totalFrames = aligner.getDataFeatures().size();
         forward->reserve(totalFrames);
         vector<Hypothesis> hypotheses;
@@ -165,17 +171,103 @@ static void getForwardProbs(vector<vector<Hypothesis>>* forward,
 }
 
 
+
+static void getBackwardProbs(vector<vector<Hypothesis>>* backward,
+    AudioToScoreAligner& aligner, const map<State, map<State, double>>& prevStates) {
+
+        int totalFrames = aligner.getDataFeatures().size();
+        backward->resize(totalFrames);
+        vector<Hypothesis> hypotheses;
+
+        // last frame:
+        hypotheses.push_back(Hypothesis(State(-2, 0), 1.));
+        backward->at(totalFrames - 1) = hypotheses;
+        //backward[totalFrames - 1] = hypotheses; ?? TODO: Why doesn't it work?
+
+        for (int frame = totalFrames - 2; frame >= 0; frame--) {
+            hypotheses.clear();
+            for (const auto& hypo : backward->at(frame + 1)) {
+                double prior = hypo.prob;
+                int event = hypo.state.eventIndex;
+                double like;
+                if (event < 0)  like = 0.0001; // TODO: change to a real likelihood
+                else    like = aligner.getLikelihood(frame + 1, event);
+
+                for (const auto& prev : prevStates.at(hypo.state)) {
+                    double trans = prev.second;
+                    hypotheses.push_back(Hypothesis(prev.first, prior*trans*like));
+                }
+            }
+            // Merge, sort (and trim), and then normalize.
+            map<State, double> merged;
+            for (const auto& h : hypotheses) {
+                if (merged.find(h.state) == merged.end()) {
+                    merged[h.state] = h.prob;
+                } else {
+                    merged[h.state] += h.prob;
+                }
+            }
+            hypotheses.clear();
+            for (const auto& h: merged) {
+                hypotheses.push_back(Hypothesis(h.first, h.second));
+            }
+            std::sort(hypotheses.begin(), hypotheses.end(), std::greater<Hypothesis>());
+            if (hypotheses.size() > BEAM_SEARCH_WIDTH)
+                hypotheses.erase(hypotheses.begin() + BEAM_SEARCH_WIDTH, hypotheses.end());
+            double total = 0.;
+            for (const auto& h : hypotheses) {
+                total += h.prob;
+            }
+            if (total == 0) std::cout << "Total is zero!" << '\n';
+            for (auto& h : hypotheses) {
+                h.prob /= total;
+            }
+            backward->at(frame) = hypotheses;
+/*
+            std::cout << "Frame = " << frame << '\n';
+            for (auto& h : backward->at(frame)) {
+                std::cout << Hypothesis::toString(h) << '\n';
+            }
+*/
+        }
+}
+
+
+
+
+
 AudioToScoreAligner::AlignmentResults SimpleHMM::getAlignmentResults()
 {
     AudioToScoreAligner::AlignmentResults results;
 
     vector<vector<Hypothesis>>* forward = new vector<vector<Hypothesis>>();
 
-    getForwardProbs(forward, m_aligner, this);
+    getForwardProbs(forward, m_aligner, m_nextStates);
     vector<vector<Hypothesis>>* backward = new vector<vector<Hypothesis>>();
-    //getBackwardProbs(backward, m_aligner, m_startingState);
-    //std::cout << forward << '\n';
-    for (const auto& l : *forward) {
+    getBackwardProbs(backward, m_aligner, m_prevStates);
+    vector<vector<Hypothesis>> post;
+    vector<Hypothesis> hypotheses;
+    int totalFrames = m_aligner.getDataFeatures().size();
+    for (int frame = 0; frame < totalFrames; frame ++) {
+        hypotheses.clear();
+        for (const auto& hypo1 : forward->at(frame)) {
+            for (const auto& hypo2 : backward->at(frame)) {
+                if (hypo1.state == hypo2.state) {
+                    hypotheses.push_back(Hypothesis(hypo1.state, hypo1.prob * hypo2.prob));
+                    break;
+                }
+            }
+        }
+        post.push_back(hypotheses);
+    }
+
+
+
+
+
+
+
+    for (const auto& l : post) {
         map<int, double> merged;
         for (const auto& h : l) {
             if (merged.find(h.state.eventIndex) == merged.end()) {
