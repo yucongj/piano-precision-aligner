@@ -194,8 +194,8 @@ PianoAligner::getOutputDescriptors() const
     list.push_back(d);
     */
     OutputDescriptor d;
-    d.identifier = "testmaxlikelihood";
-    d.name = "Testing: Max Likelihood";
+    d.identifier = "testsimplehmm";
+    d.name = "Testing: Simple HMM";
     d.description = "Testing for pianoaligner";
     d.unit = "";
     d.hasFixedBinCount = true;
@@ -284,7 +284,7 @@ PianoAligner::process(const float *const *inputBuffers, Vamp::RealTime timestamp
     const float *fbuf = inputBuffers[0];
     AudioToScoreAligner::DataSpectrum s;
     s.reserve(bins);
-    double total = 0;
+    double total = 0.;
     for (int i = 1; i <= bins; i++) { // skip DC
         double real = fbuf[i*2];
         double imag = fbuf[i*2 + 1];

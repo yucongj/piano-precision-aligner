@@ -131,8 +131,11 @@ static void getForwardProbs(vector<vector<Hypothesis>>* forward,
                     double trans = next.second;
                     int event = next.first.eventIndex;
                     double like;
-                    if (event < 0)  like = 0.0001; // TODO: change to a real likelihood
-                    else    like = aligner.getLikelihood(frame, event);
+                    like = aligner.getLikelihood(frame, event);
+                    //if (event < 0) {
+                        //like = 0.0001;
+                        //std::cout <<"frame = "<<frame<<", event = "<<event<<", likelihood = "<<like << '\n';
+                    //}
                     hypotheses.push_back(Hypothesis(next.first, prior*trans*like));
                 }
             }
@@ -182,7 +185,7 @@ static void getBackwardProbs(vector<vector<Hypothesis>>* backward,
         // last frame:
         hypotheses.push_back(Hypothesis(State(-2, 0), 1.));
         backward->at(totalFrames - 1) = hypotheses;
-        //backward[totalFrames - 1] = hypotheses; ?? TODO: Why doesn't it work?
+        //backward[totalFrames - 1] = hypotheses; ?? TODO: Why doesn't this work?
 
         for (int frame = totalFrames - 2; frame >= 0; frame--) {
             hypotheses.clear();
@@ -267,7 +270,7 @@ AudioToScoreAligner::AlignmentResults SimpleHMM::getAlignmentResults()
 
 
 
-    for (const auto& l : post) {
+    for (const auto& l : post) {//*forward
         map<int, double> merged;
         for (const auto& h : l) {
             if (merged.find(h.state.eventIndex) == merged.end()) {

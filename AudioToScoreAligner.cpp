@@ -50,6 +50,14 @@ void AudioToScoreAligner::initializeLikelihoods()
         }
         m_likelihoods.push_back(l);
     }
+
+    // event = -1 and -2:
+    for (int frame = 0; frame < frames; frame++) {
+        vector<Likelihood> l;
+        l.push_back(Likelihood(0, false)); // event = -1
+        l.push_back(Likelihood(0, false)); // event = -2
+        m_silenceLikelihoods.push_back(l);
+    }
 }
 
 
@@ -59,8 +67,38 @@ double AudioToScoreAligner::getLikelihood(int frame, int event)
         std::cerr << "AudioToScoreAligner::getLikelihood:\
         features are not supplied." << '\n';
     }
+    static Template silenceTemplate;
+    static bool haveInitializedSilenceTemplates = false;
+    if (!haveInitializedSilenceTemplates) { // TODO: Change it later.
+        int bins = m_dataFeatures[frame].size();
+        double low_freq = 20.;
+        double low_proportion = .5;
+        double p1 = low_proportion / low_freq;
+        double p2 = (1 - low_proportion) / (double)bins;
+        for (int bin = 0; bin < bins; bin++) {
+            if (bin < low_freq) {
+                silenceTemplate.push_back(p1 + p2);
+            } else {
+                silenceTemplate.push_back(p2);
+            }
+        }
+        haveInitializedSilenceTemplates = true;
+    }
+
     // TODO: check the range for frame and event
-    // TODO: if (frame < 0) use a different template
+    // If event < 0, use a different template:
+    if (event < 0) {
+        if(!m_silenceLikelihoods[frame][std::abs(event)-1].calculated) {
+            double score = 0;
+            for (int bin = 0; bin < m_dataFeatures[frame].size(); bin++) {
+                score += m_dataFeatures[frame][bin]*log(silenceTemplate[bin]);
+            }
+            m_silenceLikelihoods[frame][std::abs(event)-1].likelihood = exp(score);
+            m_silenceLikelihoods[frame][std::abs(event)-1].calculated = true;
+        }
+        return m_silenceLikelihoods[frame][std::abs(event)-1].likelihood;
+    }
+
     if (!m_likelihoods[frame][event].calculated) {
         const Score::MusicalEventList& eventList = m_score.getMusicalEvents();
         double score = 0;
@@ -69,6 +107,7 @@ double AudioToScoreAligner::getLikelihood(int frame, int event)
             score += m_dataFeatures[frame][bin]*log(eventList[event].eventTemplate[bin]);
         }
         m_likelihoods[frame][event].likelihood = exp(score);
+        m_likelihoods[frame][event].calculated = true;
     }
 
     return m_likelihoods[frame][event].likelihood;

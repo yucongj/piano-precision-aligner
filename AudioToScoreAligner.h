@@ -53,6 +53,7 @@ private:
     int m_hopSize;
     Score m_score;
     DataLikelihoods m_likelihoods;
+    DataLikelihoods m_silenceLikelihoods;
     DataFeatures m_dataFeatures;
 
     void initializeLikelihoods();
