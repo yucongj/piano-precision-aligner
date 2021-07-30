@@ -195,7 +195,7 @@ PianoAligner::getOutputDescriptors() const
     */
     OutputDescriptor d;
     d.identifier = "testsimplehmm";
-    d.name = "Testing: Simple HMM";
+    d.name = "Testing Simple HMM";
     d.description = "Testing for pianoaligner";
     d.unit = "";
     d.hasFixedBinCount = true;
@@ -219,7 +219,7 @@ PianoAligner::getOutputDescriptors() const
     // Testing:
     d.identifier = "testingtemplates";
     d.name = "Testing Templates";
-    d.description = "Teing the templates";
+    d.description = "Testing the templates";
     d.unit = "";
     d.hasFixedBinCount = true;
     d.binCount = 1024/2;
@@ -240,6 +240,33 @@ PianoAligner::getOutputDescriptors() const
     d.sampleType = OutputDescriptor::FixedSampleRate;
     d.sampleRate = m_inputSampleRate/(256*6);
     list.push_back(d);
+
+    // Onsets:
+    d.identifier = "chordonsets";
+    d.name = "Chord Onsets";
+    d.description = "Chord onsets by the dummy plugin";
+    d.unit = "";
+    d.hasFixedBinCount = true;
+    d.binCount = 0;
+    d.hasKnownExtents = false;
+    d.isQuantized = false;
+    d.sampleType = OutputDescriptor::VariableSampleRate;
+    d.hasDuration = false;
+    list.push_back(d);
+
+    // Tempo line:
+    d.identifier = "eventtempo";
+    d.name = "Event Tempo";
+    d.description = "Tempo of an event";
+    d.unit = "";
+    d.hasFixedBinCount = true;
+    d.binCount = 1;
+    d.hasKnownExtents = false;
+    d.isQuantized = false;
+    d.sampleType = OutputDescriptor::VariableSampleRate;
+    d.hasDuration = false;
+    list.push_back(d);
+
 
     return list;
 }
@@ -336,6 +363,34 @@ PianoAligner::getRemainingFeatures()
         // feature.timestamp = result;
         featureSet[0].push_back(feature);
     }
+
+    // Show onsets. TODO: deal with this part in SimpleHMM instead of here.
+    vector<int> frames;
+    int currentEvent = -1;
+    int frame = 0;
+    for (const auto& result: alignmentResults) {
+        if (result != currentEvent) {
+            Feature feature;
+            feature.hasTimestamp = true;
+            feature.timestamp = Vamp::RealTime::frame2RealTime(frame, m_inputSampleRate/(256.*6.));
+            feature.label = to_string(result);
+            featureSet[3].push_back(feature);
+            currentEvent = result;
+            frames.push_back(frame);
+        }
+        frame++;
+    }
+
+    // Show local tempo. TODO: deal with this part in SimpleHMM instead of here.
+    for (int i = 0; i < frames.size() - 1; i++) {
+        Feature feature;
+        feature.hasTimestamp = true;
+        feature.timestamp = Vamp::RealTime::frame2RealTime(frames[i], m_inputSampleRate/(256.*6.));//featureSet[3][i];
+        double tempo = 100./(double)(frames[i+1] - frames[i]); // TODO: check != 0
+        feature.values.push_back(tempo);
+        featureSet[4].push_back(feature);
+    }
+
 
     // Testing: plot "normalized" PowerSpectrum
     int scale = 6; // hard-coded for now

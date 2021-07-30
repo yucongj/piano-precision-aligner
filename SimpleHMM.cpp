@@ -193,8 +193,8 @@ static void getBackwardProbs(vector<vector<Hypothesis>>* backward,
                 double prior = hypo.prob;
                 int event = hypo.state.eventIndex;
                 double like;
-                if (event < 0)  like = 0.0001; // TODO: change to a real likelihood
-                else    like = aligner.getLikelihood(frame + 1, event);
+                //if (event < 0)  like = 0.0001;
+                like = aligner.getLikelihood(frame + 1, event);
 
                 for (const auto& prev : prevStates.at(hypo.state)) {
                     double trans = prev.second;
