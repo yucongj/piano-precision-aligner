@@ -55,6 +55,9 @@ protected:
     // plugin-specific data and methods go here
     AudioToScoreAligner *m_aligner;
     int m_blockSize;
+    bool m_isFirstFrame;
+    Vamp::RealTime m_firstFrameTime;
+    int m_frameCount;
 };
 
 

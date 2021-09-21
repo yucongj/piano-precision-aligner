@@ -23,6 +23,7 @@ bool AudioToScoreAligner::loadAScore(int blockSize)
 {
     //string testScorePath = "/Users/yjiang3/Desktop/Pilot/testingScores/Barcarolle.solo";
     string testScorePath = "/Users/yjiang3/Desktop/Pilot/BothHandsC/BothHandsC.solo";
+    // string testScorePath = "/Users/yjiang3/Desktop/Pilot/RightHandOnlyC/RightHandOnlyC.solo";
     bool success = m_score.initialize(testScorePath);
     NoteTemplates t =
         CreateNoteTemplates::getNoteTemplates(m_inputSampleRate, blockSize);
@@ -92,9 +93,24 @@ double AudioToScoreAligner::getLikelihood(int frame, int event)
             double score = 0;
             for (int bin = 0; bin < m_dataFeatures[frame].size(); bin++) {
                 score += m_dataFeatures[frame][bin]*log(silenceTemplate[bin]);
+                /*
+                if (frame == 2 && event == -1) {
+                    if (isnan(score)) {
+                        std::cout << "bin="<<bin<<", score="<<score << '\n';
+                        std::cout << "bin value: "<<m_dataFeatures[frame][bin] << '\n';
+                        std::cout << "template value: "<<silenceTemplate[bin] << '\n';
+                    }
+                }
+                */
             }
             m_silenceLikelihoods[frame][std::abs(event)-1].likelihood = exp(score);
             m_silenceLikelihoods[frame][std::abs(event)-1].calculated = true;
+            /*
+            if (isnan(m_silenceLikelihoods[frame][std::abs(event)-1].likelihood)) {
+                std::cerr << "Frame="<<frame << ", event="<<event<<'\n';
+                std::cerr << "like="<<m_silenceLikelihoods[frame][std::abs(event)-1].likelihood << '\n';
+            }
+            */
         }
         return m_silenceLikelihoods[frame][std::abs(event)-1].likelihood;
     }

@@ -132,10 +132,6 @@ static void getForwardProbs(vector<vector<Hypothesis>>* forward,
                     int event = next.first.eventIndex;
                     double like;
                     like = aligner.getLikelihood(frame, event);
-                    //if (event < 0) {
-                        //like = 0.0001;
-                        //std::cout <<"frame = "<<frame<<", event = "<<event<<", likelihood = "<<like << '\n';
-                    //}
                     hypotheses.push_back(Hypothesis(next.first, prior*trans*like));
                 }
             }
@@ -159,7 +155,7 @@ static void getForwardProbs(vector<vector<Hypothesis>>* forward,
             for (const auto& h : hypotheses) {
                 total += h.prob;
             }
-            if (total == 0) std::cout << "Total is zero!" << '\n';
+            if (total == 0) std::cout << "Total is zero!!!" << '\n';
             for (auto& h : hypotheses) {
                 h.prob /= total;
             }
@@ -185,7 +181,6 @@ static void getBackwardProbs(vector<vector<Hypothesis>>* backward,
         // last frame:
         hypotheses.push_back(Hypothesis(State(-2, 0), 1.));
         backward->at(totalFrames - 1) = hypotheses;
-        //backward[totalFrames - 1] = hypotheses; ?? TODO: Why doesn't this work?
 
         for (int frame = totalFrames - 2; frame >= 0; frame--) {
             hypotheses.clear();
@@ -193,7 +188,6 @@ static void getBackwardProbs(vector<vector<Hypothesis>>* backward,
                 double prior = hypo.prob;
                 int event = hypo.state.eventIndex;
                 double like;
-                //if (event < 0)  like = 0.0001;
                 like = aligner.getLikelihood(frame + 1, event);
 
                 for (const auto& prev : prevStates.at(hypo.state)) {
@@ -264,12 +258,59 @@ AudioToScoreAligner::AlignmentResults SimpleHMM::getAlignmentResults()
         post.push_back(hypotheses);
     }
 
+    // Print posterior hypotheses:
+
+    int frame = 0;
+    // std::cout << "Forward!!!" << '\n';
+     for (auto& p : post) { // *forward
+         std::sort(p.begin(), p.end(), std::greater<Hypothesis>());
+         //std::cerr << "### Frame = " << frame << '\n';
+         // std::cerr << "### real time = " <<Vamp::RealTime::frame2RealTime(frame*(128.*6.), 48000)<< '\n'; // m_firstFrameTime is 0 in SV
+         for (const auto& h : p) {
+             //std::cerr << Hypothesis::toString(h) << '\n';
+         }
+         frame++;
+     }
 
 
 
 
+    // Window
+    int windowSize = 3; // TODO: Check and make sure it's always an odd number.
+    std::cout << "windowSize/2 = "<<windowSize/2 << '\n';
+    int numEvents = m_aligner.getScore().getMusicalEvents().size();
+    int startFrame = 0;
+    for (int event = 0; event < numEvents; event++) {
+        if (results.size() == 0)    startFrame = 0;
+        else startFrame = results[results.size()-1] - windowSize/2 + 1;
+        if (startFrame < 0) startFrame = 0;
+        double bestScore = 0.;
+        int bestStartFrame;
+        for (int frame = startFrame; frame + windowSize < post.size() + 1; frame++) {
+            // find the best startFrame for this event, and add frame to result:
+            double score = 0.;
+            for (int t = frame; t < frame + windowSize; t++) {
+                for (const auto& h: post[t]) {
+                    if (h.state.eventIndex == event && h.state.microIndex == 0) {
+                        score += h.prob;
+                    }
+                }
+            }
+            if (score > bestScore) {
+                bestScore = score;
+                bestStartFrame = frame + windowSize/2;
+            }
+        }
+        results.push_back(bestStartFrame);
+        std::cerr << "Event="<<event<<", bestStartFrame = " << bestStartFrame << '\n';
+    }
+
+    return results;
 
 
+
+// Return the the event with maximum posterior prob for each frame.
+    frame = 0;
     for (const auto& l : post) {//*forward
         map<int, double> merged;
         for (const auto& h : l) {
@@ -287,9 +328,10 @@ AudioToScoreAligner::AlignmentResults SimpleHMM::getAlignmentResults()
                 record = p.first;
             }
         }
-        results.push_back(record);
+        //std::cout << "Frame = "<<frame<< '\n';
+        //std::cout << "record = "<<record<<", highest prob = " <<highest << '\n';
+        frame++;
+        // results.push_back(record);
     }
-
-
     return results;
 }

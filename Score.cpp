@@ -16,7 +16,7 @@
 using namespace std;
 
 Score::Score() : m_timeSignatureNumer{4}, m_timeSignatureDenom{4},
- m_defaultTempo{120.}
+ m_defaultTempo{120.}//120.
 {
 }
 

@@ -13,7 +13,9 @@
 PianoAligner::PianoAligner(float inputSampleRate) :
     Plugin(inputSampleRate),
     m_blockSize(0),
-    m_aligner(nullptr)
+    m_aligner(nullptr),
+    m_isFirstFrame(true),
+    m_frameCount(0)
     // Also be sure to set your plugin parameters (presumably stored
     // in member variables) to their default values here -- the host
     // will not do that for you
@@ -88,7 +90,7 @@ PianoAligner::getPreferredStepSize() const
     //return 512; // 0 means "anything sensible"; in practice this
               // means the same as the block size for TimeDomain
               // plugins, or half of it for FrequencyDomain plugins
-    return 256*6;
+    return 128*6;//256*6;
 }
 
 size_t
@@ -213,7 +215,7 @@ PianoAligner::getOutputDescriptors() const
     d.isQuantized = false;
     //d.sampleType = OutputDescriptor::OneSamplePerStep;
     d.sampleType = OutputDescriptor::FixedSampleRate;
-    d.sampleRate = m_inputSampleRate/(256*6);
+    d.sampleRate = m_inputSampleRate/(128*6);
     list.push_back(d);
 
     // Testing:
@@ -238,7 +240,7 @@ PianoAligner::getOutputDescriptors() const
     d.hasKnownExtents = false;
     d.isQuantized = false;
     d.sampleType = OutputDescriptor::FixedSampleRate;
-    d.sampleRate = m_inputSampleRate/(256*6);
+    d.sampleRate = m_inputSampleRate/(128*6);
     list.push_back(d);
 
     // Onsets:
@@ -281,10 +283,11 @@ PianoAligner::initialise(size_t channels, size_t stepSize, size_t blockSize)
     if (blockSize != 1024*6) {
 	       return false;
     }
-    if (stepSize != 256*6) {
+    if (stepSize != 128*6) { //256*6
 	       return false;
     }
 
+    m_isFirstFrame = true;
 
     // Real initialisation work goes here!
 
@@ -299,12 +302,20 @@ void
 PianoAligner::reset()
 {
     // Clear buffers, reset stored values, etc
+    m_isFirstFrame = true;
 }
 
 PianoAligner::FeatureSet
 PianoAligner::process(const float *const *inputBuffers, Vamp::RealTime timestamp)
 {
     // Do actual work!
+
+    if (m_isFirstFrame) {
+        m_firstFrameTime = timestamp; // 0.064000000R in simple-host; 0.000000000R in SV
+        m_isFirstFrame = false;
+        m_frameCount = 0;
+        std::cerr << "first frame time = "<<timestamp << '\n';
+    }
 
     int scale = 6; // hard-coded for now
     int bins = (m_blockSize/scale)/2;
@@ -320,41 +331,53 @@ PianoAligner::process(const float *const *inputBuffers, Vamp::RealTime timestamp
         total += power;
     }
     for (auto& value: s) {
-        //Check total != 0
-        value /= total;
+        if (total != 0.) {
+            value /= total;
+        }
     }
     m_aligner->supplyFeature(s);
 
+
+
+/*
+    if (m_frameCount >= 390 && m_frameCount <=403) {
+        std::cerr << "#Frame == " <<m_frameCount;
+        std::cerr << timestamp << '\n';
+        for (const auto& value: s) {
+            std::cerr << value << ',';
+        }
+        std::cerr << "end of Frame "<<m_frameCount << '\n'<<'\n';
+    }
+
+    m_frameCount++;
+    // std::cout << "m_frameCount: " <<m_frameCount<< '\n';
+*/
+
     // Testing templates:
+    /*
     FeatureSet fs;
     Feature feature;
     feature.hasTimestamp = false;
     feature.values.reserve(bins); // optional
     long frame = Vamp::RealTime::realTime2Frame(timestamp, m_inputSampleRate);
     int index = floor(29.*frame/(m_inputSampleRate*12.)); // 0-based index
-    //std::cout << frame<<'\t'<<(m_inputSampleRate*12.)/(m_blockSize/2.) << '\n';
     Score::MusicalEventList events = m_aligner->getScore().getMusicalEvents();
     Template t = events[index].eventTemplate;
-    //index = 21+floor(80.*frame/(m_inputSampleRate*12.));
-    //std::cout <<"midi = "<<index << '\n';
-    //NoteTemplates nt =
-        //CreateNoteTemplates::getNoteTemplates(m_inputSampleRate, bins*2);
-    //Template t = nt[index];
     for (int bin = 0; bin < bins; bin++) {
         feature.values.push_back(t[bin]);
     }
     fs[1].push_back(feature);
 
-
     return fs;
-    //return FeatureSet();
+    */
+    return FeatureSet();
 }
 
 PianoAligner::FeatureSet
 PianoAligner::getRemainingFeatures()
 {
-
     FeatureSet featureSet;
+/*
     AudioToScoreAligner::AlignmentResults alignmentResults = m_aligner->align();
     for (const auto& result: alignmentResults) {
         Feature feature;
@@ -363,7 +386,26 @@ PianoAligner::getRemainingFeatures()
         // feature.timestamp = result;
         featureSet[0].push_back(feature);
     }
+*/
 
+
+    // Window version:
+    vector<int> frames;
+    AudioToScoreAligner::AlignmentResults alignmentResults = m_aligner->align();
+    int event = 0;
+    for (const auto& frame: alignmentResults) {
+        Feature feature;
+        feature.hasTimestamp = true;
+        feature.timestamp = m_firstFrameTime + Vamp::RealTime::frame2RealTime(frame*(128.*6.), m_inputSampleRate);
+        std::cerr <<"event="<<event<< ", real time = "<<feature.timestamp << '\n';
+        feature.label = to_string(event);
+        featureSet[3].push_back(feature);
+        frames.push_back(frame);
+        event++;
+    }
+
+
+/*
     // Show onsets. TODO: deal with this part in SimpleHMM instead of here.
     vector<int> frames;
     int currentEvent = -1;
@@ -372,7 +414,8 @@ PianoAligner::getRemainingFeatures()
         if (result != currentEvent) {
             Feature feature;
             feature.hasTimestamp = true;
-            feature.timestamp = Vamp::RealTime::frame2RealTime(frame, m_inputSampleRate/(256.*6.));
+            feature.timestamp = m_firstFrameTime + Vamp::RealTime::frame2RealTime(frame, m_inputSampleRate/(128.*6.));
+            std::cout <<"real time = "<< feature.timestamp << '\n';
             feature.label = to_string(result);
             featureSet[3].push_back(feature);
             currentEvent = result;
@@ -380,12 +423,13 @@ PianoAligner::getRemainingFeatures()
         }
         frame++;
     }
+    */
 
     // Show local tempo. TODO: deal with this part in SimpleHMM instead of here.
     for (int i = 0; i < frames.size() - 1; i++) {
         Feature feature;
         feature.hasTimestamp = true;
-        feature.timestamp = Vamp::RealTime::frame2RealTime(frames[i], m_inputSampleRate/(256.*6.));//featureSet[3][i];
+        feature.timestamp = Vamp::RealTime::frame2RealTime(frames[i]*(128.*6.), m_inputSampleRate);//featureSet[3][i];
         double tempo = 100./(double)(frames[i+1] - frames[i]); // TODO: check != 0
         feature.values.push_back(tempo);
         featureSet[4].push_back(feature);
