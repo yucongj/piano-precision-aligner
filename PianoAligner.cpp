@@ -123,13 +123,21 @@ PianoAligner::getParameterDescriptors() const
 
     ParameterDescriptor d;
     d.identifier = "parameter";
-    d.name = "Some Parameter";
+    d.name = "Some Parameter"; // "Choice of score"
     d.description = "";
     d.unit = "";
     d.minValue = 0;
-    d.maxValue = 10;
-    d.defaultValue = 5;
-    d.isQuantized = false;
+    d.maxValue = 10; // 4
+    d.defaultValue = 5; // 0
+    d.isQuantized = false; // true
+    /*
+    d.quantizeStep = 1; // added
+    d.valueNames.push_back("C major scale");
+    d.valueNames.push_back("BEAM_SEARCH_WIDTH");
+    d.valueNames.push_back("C major scale right hand");
+    d.valueNames.push_back("D major scale");
+    d.valueNames.push_back("E major scale");
+    */
     list.push_back(d);
 
     return list;
@@ -138,7 +146,7 @@ PianoAligner::getParameterDescriptors() const
 float
 PianoAligner::getParameter(string identifier) const
 {
-    if (identifier == "parameter") {
+    if (identifier == "parameter") { // if (identifier == "score")
         return 5; // return the ACTUAL current value of your parameter here!
     }
     return 0;
@@ -157,6 +165,13 @@ PianoAligner::getPrograms() const
 {
     ProgramList list;
 
+    list.push_back("BothHandsC");
+    list.push_back("ContraryArpeggioC");
+    list.push_back("ContraryC");
+    list.push_back("LeftHandOnlyC");
+    list.push_back("OneHandOnlyArpeggioC");
+    list.push_back("RightHandOnlyC");
+
     // If you have no programs, return an empty list (or simply don't
     // implement this function or getCurrentProgram/selectProgram)
 
@@ -172,6 +187,7 @@ PianoAligner::getCurrentProgram() const
 void
 PianoAligner::selectProgram(string name)
 {
+    m_scoreName = name;
 }
 
 PianoAligner::OutputList
@@ -293,7 +309,7 @@ PianoAligner::initialise(size_t channels, size_t stepSize, size_t blockSize)
 
     m_aligner = new AudioToScoreAligner(m_inputSampleRate, stepSize);
     m_blockSize = blockSize;
-    m_aligner->loadAScore(blockSize);
+    m_aligner->loadAScore(m_scoreName, blockSize);
 
     return true;
 }

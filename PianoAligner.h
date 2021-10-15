@@ -58,6 +58,7 @@ protected:
     bool m_isFirstFrame;
     Vamp::RealTime m_firstFrameTime;
     int m_frameCount;
+    string m_scoreName;
 };
 
 

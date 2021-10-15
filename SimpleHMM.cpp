@@ -7,7 +7,7 @@
 #include <cmath>
 #include <map>
 
-static const int BEAM_SEARCH_WIDTH = 200;//200;
+static const int BEAM_SEARCH_WIDTH = 200;
 
 using Hypothesis = SimpleHMM::Hypothesis;
 using State = SimpleHMM::State;

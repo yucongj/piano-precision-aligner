@@ -50,8 +50,12 @@ static void initializeNoteTemplates(float sr, int blockSize, NoteTemplates& t) {
             total += value;
         }
         // TODO: check total != 0.
-        for (auto &value: t[midi]) {
-            value /= total;
+        if (total == 0.) {
+            std::cerr << "In initializeNoteTemplates: total is 0." << '\n';
+        } else {
+            for (auto &value: t[midi]) {
+                value /= total;
+            }
         }
     }
 }

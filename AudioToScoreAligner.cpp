@@ -19,11 +19,28 @@ AudioToScoreAligner::~AudioToScoreAligner()
 {
 }
 
-bool AudioToScoreAligner::loadAScore(int blockSize)
+bool AudioToScoreAligner::loadAScore(string scoreName, int blockSize)
 {
     //string testScorePath = "/Users/yjiang3/Desktop/Pilot/testingScores/Barcarolle.solo";
-    string testScorePath = "/Users/yjiang3/Desktop/Pilot/BothHandsC/BothHandsC.solo";
+    string testScorePath;// = "/Users/yjiang3/Desktop/Pilot/BothHandsC/BothHandsC.solo";
     // string testScorePath = "/Users/yjiang3/Desktop/Pilot/RightHandOnlyC/RightHandOnlyC.solo";
+
+    if (scoreName == "BothHandsC") {
+        testScorePath = "/Users/yjiang3/Desktop/Pilot/BothHandsC/BothHandsC.solo";
+    } else if (scoreName == "ContraryArpeggioC") {
+        testScorePath = "/Users/yjiang3/Desktop/Pilot/ContraryArpeggioC/ContraryArpeggioC.solo";
+    } else if (scoreName == "ContraryC") {
+        testScorePath = "/Users/yjiang3/Desktop/Pilot/ContraryC/ContraryC.solo";
+    } else if (scoreName == "LeftHandOnlyC") {
+        testScorePath = "/Users/yjiang3/Desktop/Pilot/LeftHandOnlyC/LeftHandOnlyC.solo";
+    } else if (scoreName == "OneHandOnlyArpeggioC") {
+        testScorePath = "/Users/yjiang3/Desktop/Pilot/OneHandOnlyArpeggioC/OneHandOnlyArpeggioC.solo";
+    } else if (scoreName == "RightHandOnlyC") {
+        testScorePath = "/Users/yjiang3/Desktop/Pilot/RightHandOnlyC/RightHandOnlyC.solo";
+    } else {
+        std::cerr << "scoreName not found in AudioToScoreAligner::loadAScore" << '\n';
+    }
+
     bool success = m_score.initialize(testScorePath);
     NoteTemplates t =
         CreateNoteTemplates::getNoteTemplates(m_inputSampleRate, blockSize);
