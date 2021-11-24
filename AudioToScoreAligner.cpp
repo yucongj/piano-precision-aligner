@@ -22,7 +22,7 @@ AudioToScoreAligner::~AudioToScoreAligner()
 bool AudioToScoreAligner::loadAScore(string scoreName, int blockSize)
 {
     //string testScorePath = "/Users/yjiang3/Desktop/Pilot/testingScores/Barcarolle.solo";
-    string testScorePath;// = "/Users/yjiang3/Desktop/Pilot/BothHandsC/BothHandsC.solo";
+    string testScorePath = "/Users/yjiang3/Desktop/Pilot/BothHandsC/BothHandsC.solo";
     // string testScorePath = "/Users/yjiang3/Desktop/Pilot/RightHandOnlyC/RightHandOnlyC.solo";
 
     if (scoreName == "BothHandsC") {

@@ -265,7 +265,7 @@ PianoAligner::getOutputDescriptors() const
     d.description = "Chord onsets by the dummy plugin";
     d.unit = "";
     d.hasFixedBinCount = true;
-    d.binCount = 0;
+    d.binCount = 1;
     d.hasKnownExtents = false;
     d.isQuantized = false;
     d.sampleType = OutputDescriptor::VariableSampleRate;
@@ -354,7 +354,6 @@ PianoAligner::process(const float *const *inputBuffers, Vamp::RealTime timestamp
     m_aligner->supplyFeature(s);
 
 
-
 /*
     if (m_frameCount >= 390 && m_frameCount <=403) {
         std::cerr << "#Frame == " <<m_frameCount;
@@ -408,13 +407,21 @@ PianoAligner::getRemainingFeatures()
     // Window version:
     vector<int> frames;
     AudioToScoreAligner::AlignmentResults alignmentResults = m_aligner->align();
+    Score::MusicalEventList eventList = m_aligner->getScore().getMusicalEvents();
     int event = 0;
+
     for (const auto& frame: alignmentResults) {
         Feature feature;
         feature.hasTimestamp = true;
         feature.timestamp = m_firstFrameTime + Vamp::RealTime::frame2RealTime(frame*(128.*6.), m_inputSampleRate);
         std::cerr <<"event="<<event<< ", real time = "<<feature.timestamp << '\n';
-        feature.label = to_string(event);
+        Score::MeasureInfo info = eventList[event].measureInfo;
+        // Calculate label:
+        feature.label = to_string(info.measureNumber);
+        feature.label += "+" + to_string(info.measurePosition.numerator) + "/" + to_string(info.measurePosition.denominator);
+        // Calculate score position:
+        feature.values.push_back(info.measureFraction.numerator * 2000 / info.measureFraction.denominator);
+
         featureSet[3].push_back(feature);
         frames.push_back(frame);
         event++;
