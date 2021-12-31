@@ -8,6 +8,7 @@
 #include "Templates.h"
 #include "Score.h" // delete later
 #include <cmath> // delete later
+#include <filesystem>
 
 
 PianoAligner::PianoAligner(float inputSampleRate) :
@@ -165,12 +166,18 @@ PianoAligner::getPrograms() const
 {
     ProgramList list;
 
-    list.push_back("BothHandsC");
-    list.push_back("ContraryArpeggioC");
-    list.push_back("ContraryC");
-    list.push_back("LeftHandOnlyC");
-    list.push_back("OneHandOnlyArpeggioC");
-    list.push_back("RightHandOnlyC");
+    std::filesystem::path scoreDir = string(getenv("HOME")) + "/Documents/SV-PianoPrecision/Scores";
+    if (!exists(scoreDir)) {
+        std::cerr << "Score directory ($Home/Documents/SV-PianoPrecision/Scores) does not exist!" << '\n';
+        return list;
+    }
+    std::filesystem::path targetPath;
+    for (const auto& entry : std::filesystem::directory_iterator(scoreDir)) {
+        string folderName = string(entry.path().filename());
+        if (folderName[0] == '.') continue;
+        list.push_back(folderName);
+        std::cerr << folderName << '\n';
+    }
 
     // If you have no programs, return an empty list (or simply don't
     // implement this function or getCurrentProgram/selectProgram)
@@ -188,6 +195,7 @@ void
 PianoAligner::selectProgram(string name)
 {
     m_scoreName = name;
+    std::cerr << "In selectProgram: name is -> " << name << '\n'; // ???
 }
 
 PianoAligner::OutputList

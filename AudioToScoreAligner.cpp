@@ -8,7 +8,9 @@
 #include "SimpleHMM.h"
 
 #include <cmath>
+#include <filesystem>
 #include <vector>
+
 
 AudioToScoreAligner::AudioToScoreAligner(float inputSampleRate, int hopSize) :
     m_inputSampleRate{inputSampleRate} , m_hopSize{hopSize}
@@ -21,10 +23,35 @@ AudioToScoreAligner::~AudioToScoreAligner()
 
 bool AudioToScoreAligner::loadAScore(string scoreName, int blockSize)
 {
-    //string testScorePath = "/Users/yjiang3/Desktop/Pilot/testingScores/Barcarolle.solo";
-    string testScorePath = "/Users/yjiang3/Desktop/Pilot/BothHandsC/BothHandsC.solo";
-    // string testScorePath = "/Users/yjiang3/Desktop/Pilot/RightHandOnlyC/RightHandOnlyC.solo";
+    std::cerr << "In loadAScore: scoreName is -> " << scoreName << '\n';
+    std::filesystem::path scoreDir = string(getenv("HOME")) + "/Documents/SV-PianoPrecision/Scores";
+    if (!exists(scoreDir)) {
+        std::cerr << "Score directory ($Home/Documents/SV-PianoPrecision/Scores) does not exist!" << '\n';
+        return false;
+    }
+    std::filesystem::path targetPath;
+    for (const auto& entry : std::filesystem::directory_iterator(scoreDir)) {
+        string folderName = string(entry.path().filename());
+        if (folderName == scoreName) {
+            targetPath = entry.path();
+            break;
+        }
+    }
+    if (!exists(targetPath)) {
+        std::cerr << "Score folder not found: " << targetPath << '\n';
+        return false;
+    }
+    std::filesystem::path scorePath = string(targetPath) + "/" + scoreName + ".solo";
+    if (!exists(scorePath)) {
+        std::cerr << "Score file (.solo) not found:" << scorePath << '\n';
+        return false;
+    }
 
+    string testScorePath = string(scorePath);
+    std::cerr << "In loadAScore: testScorePath is -> " << testScorePath << '\n';
+
+/*
+    string testScorePath = "/Users/yjiang3/Desktop/Pilot/BothHandsC/BothHandsC.solo";
     if (scoreName == "BothHandsC") {
         testScorePath = "/Users/yjiang3/Desktop/Pilot/BothHandsC/BothHandsC.solo";
     } else if (scoreName == "ContraryArpeggioC") {
@@ -40,6 +67,7 @@ bool AudioToScoreAligner::loadAScore(string scoreName, int blockSize)
     } else {
         std::cerr << "scoreName not found in AudioToScoreAligner::loadAScore" << '\n';
     }
+    */
 
     bool success = m_score.initialize(testScorePath);
     NoteTemplates t =
