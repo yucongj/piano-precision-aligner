@@ -303,7 +303,6 @@ PianoAligner::initialise(size_t channels, size_t stepSize, size_t blockSize)
     if (channels < getMinChannelCount() ||
 	channels > getMaxChannelCount()) return false;
 
-
     if (blockSize != 1024*6) {
 	       return false;
     }
@@ -317,9 +316,19 @@ PianoAligner::initialise(size_t channels, size_t stepSize, size_t blockSize)
 
     m_aligner = new AudioToScoreAligner(m_inputSampleRate, stepSize);
     m_blockSize = blockSize;
-    m_aligner->loadAScore(m_scoreName, blockSize);
 
-    return true;
+    if (m_scoreName == "") {
+	std::cerr << "PianoAligner::initialise: No score selected" << std::endl;
+	return false;
+    }
+    
+    if (m_aligner->loadAScore(m_scoreName, blockSize)) {
+	return true;
+    } else {
+        std::cerr << "PianoAligner::initialise: Failed to load score "
+		  << m_scoreName << std::endl;
+	return false;
+    }
 }
 
 void
