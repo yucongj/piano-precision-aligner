@@ -155,17 +155,17 @@ static void getForwardProbs(vector<vector<Hypothesis>>* forward,
             for (const auto& h : hypotheses) {
                 total += h.prob;
             }
-            if (total == 0) std::cout << "Total is zero!!!" << '\n';
+            if (total == 0) std::cerr << "In getForwardProbs: total is zero!!!" << '\n';
             for (auto& h : hypotheses) {
                 h.prob /= total;
             }
             forward->push_back(hypotheses);
-/*
-            std::cout << "Frame = " << frame << '\n';
+
+            std::cerr << "In getForwardProbs: frame = " << frame << '\n';
             for (auto& h : forward->at(frame)) {
-                std::cout << Hypothesis::toString(h) << '\n';
+                std::cerr << "new prior = "<<Hypothesis::toString(h) << '\t'<<"likelihood = " << aligner.getLikelihood(frame, h.state.eventIndex) << '\n';
             }
-*/
+
         }
 }
 
@@ -215,7 +215,7 @@ static void getBackwardProbs(vector<vector<Hypothesis>>* backward,
             for (const auto& h : hypotheses) {
                 total += h.prob;
             }
-            if (total == 0) std::cout << "Total is zero!" << '\n';
+            if (total == 0) std::cerr << "In getBackwardProbs: total is zero!!!" << '\n';
             for (auto& h : hypotheses) {
                 h.prob /= total;
             }

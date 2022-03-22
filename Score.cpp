@@ -151,11 +151,17 @@ void Score::setEventTemplates(NoteTemplates& t)
         for (const auto &value: event.eventTemplate) {
             total += value;
         }
-        for (auto &value: event.eventTemplate) {
-            value /= total;
-        }
-        for (auto &value: event.eventTemplate) {
-            value = smallValue*backgroundPortion + value*(1-backgroundPortion);
+        if (total == 0) {
+            for (auto &value: event.eventTemplate) {
+                value = smallValue;
+            }
+        } else {
+            for (auto &value: event.eventTemplate) {
+                value /= total;
+            }
+            for (auto &value: event.eventTemplate) {
+                value = smallValue*backgroundPortion + value*(1-backgroundPortion);
+            }
         }
     }
 }

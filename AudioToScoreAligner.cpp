@@ -89,6 +89,8 @@ void AudioToScoreAligner::initializeLikelihoods()
         std::cerr << "AudioToScoreAligner::initializeLikelihoods:\
         features are not supplied." << '\n';
     }
+    std::cerr << "AudioToScoreAligner::initializeLikelihoods:\
+    features are indeed supplied. Number of frames = " << frames << '\n';
     for (int frame = 0; frame < frames; frame++) {
         vector<Likelihood> l;
         for (int event = 0; event < events; event++) {

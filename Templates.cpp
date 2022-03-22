@@ -28,6 +28,22 @@ static void initializeNoteTemplates(float sr, int blockSize, NoteTemplates& t) {
     int bins = (blockSize/2)/scale; // no DC
     int N = blockSize;
 
+    // Define Background Spectrum
+    vector<float> silenceTemplate;
+    double low_freq = 20.;
+    double low_proportion = .5;
+    double p1 = low_proportion / low_freq;
+    double p2 = (1 - low_proportion) / (double)bins;
+    for (int bin = 0; bin < bins; bin++) {
+        if (bin < low_freq) {
+            silenceTemplate.push_back(p1 + p2);
+        } else {
+            silenceTemplate.push_back(p2);
+        }
+    }
+
+
+
     for (int midi = LOW_MIDI; midi <= HIGH_MIDI; midi++) {
         float f0 = midiToFreq(midi);
         t[midi].resize(bins, 0);
@@ -37,9 +53,13 @@ static void initializeNoteTemplates(float sr, int blockSize, NoteTemplates& t) {
         if (bin < 0)    bin = 0;
         while (bin < bins && h <= MAX_HARMONICS_COUNT) {
             float sigma = bin * 0.01 + 0.01; // Need to test these constants
+            if (sigma < 1.) sigma = 1.; // lower bound of sigma
             for (int k = 0; k < bins; k++) {
                 float x = (k-bin)/sigma;
-                t[midi][k] += exp(-k*0.05)*peakFunction(x); // 0.01//0.1
+                t[midi][k] += exp(-k*0.01)*peakFunction(x) / sigma; // 0.01//0.1
+                //if (peakFunction(x) == 0) {
+                    //std::cerr << "!!!!peakFunction returns 0: midi=" << midi <<"bin="<<bin<<"k="<<k<< '\n';
+                //}
             }
             h++;
             bin = round(h*f0*N/(double)sr); // hth harmonic
@@ -49,13 +69,16 @@ static void initializeNoteTemplates(float sr, int blockSize, NoteTemplates& t) {
         for (const auto &value: t[midi]) {
             total += value;
         }
-        // TODO: check total != 0.
         if (total == 0.) {
-            std::cerr << "In initializeNoteTemplates: total is 0." << '\n';
+            std::cerr << "In initializeNoteTemplates: total is 0 for midi "<< midi << '\n'; // midi 108 exceeds 4k Hz.
         } else {
             for (auto &value: t[midi]) {
                 value /= total;
             }
+        }
+        // Add background:
+        for (int bin = 0; bin < bins; bin++) {
+            t[midi][bin] = 0.95 * t[midi][bin] + 0.05 * silenceTemplate[bin];
         }
     }
 }

@@ -9,6 +9,7 @@
 
 #include <vector>
 #include <map>
+#include <sstream> // for printing probs with high precision
 
 using std::vector;
 
@@ -99,8 +100,12 @@ public:
         }
 
         static string toString(const Hypothesis& h) {
-            string ss = to_string(h.prob);
-            return ss + ":\t" + State::toString(h.state);;
+            std::ostringstream out;
+            out.precision(38);
+            out << std::fixed << h.prob;
+            return out.str() + ":\t" + State::toString(h.state);
+            // string ss = to_string(h.prob);
+            //return ss + ":\t" + State::toString(h.state);
         }
     };
 
