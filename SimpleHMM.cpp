@@ -180,7 +180,9 @@ static void getBackwardProbs(vector<vector<Hypothesis>>* backward,
 
         // last frame:
         hypotheses.push_back(Hypothesis(State(-2, 0), 1.));
-        backward->at(totalFrames - 1) = hypotheses;
+        if (totalFrames > 0) {
+            backward->at(totalFrames - 1) = hypotheses;
+        }
 
         for (int frame = totalFrames - 2; frame >= 0; frame--) {
             hypotheses.clear();
