@@ -466,7 +466,7 @@ PianoAligner::getRemainingFeatures()
     */
 
     // Show local tempo. TODO: deal with this part in SimpleHMM instead of here.
-    for (int i = 0; i < frames.size() - 1; i++) {
+    for (int i = 0; i + 1 < frames.size(); i++) {
         Feature feature;
         feature.hasTimestamp = true;
         feature.timestamp = Vamp::RealTime::frame2RealTime(frames[i]*(128.*6.), m_inputSampleRate);//featureSet[3][i];
