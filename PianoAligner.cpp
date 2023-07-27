@@ -318,8 +318,23 @@ PianoAligner::initialise(size_t channels, size_t stepSize, size_t blockSize)
     m_blockSize = blockSize;
 
     if (m_scoreName == "") {
-	std::cerr << "PianoAligner::initialise: No score selected" << std::endl;
-	return false;
+        // [cc] By default we don't run at all unless a score has been
+        // chosen through selectProgram. This environment variable
+        // provides a getout in the case where we need the default
+        // configuration to be meaningful (e.g. when running in the
+        // plugin tester).
+        if (getenv("PIANO_ALIGNER_USE_DEFAULT_SCORE") != nullptr) {
+            auto programs = getPrograms();
+            if (programs.empty()) {
+                std::cerr << "PianoAligner::initialise: No scores available" << std::endl;
+                return false;
+            } else {
+                m_scoreName = programs[0];
+            }
+        } else {
+            std::cerr << "PianoAligner::initialise: No score selected" << std::endl;
+            return false;
+        }
     }
     
     if (m_aligner->loadAScore(m_scoreName, blockSize)) {
@@ -466,7 +481,7 @@ PianoAligner::getRemainingFeatures()
     */
 
     // Show local tempo. TODO: deal with this part in SimpleHMM instead of here.
-    for (int i = 0; i < frames.size() - 1; i++) {
+    for (int i = 0; i + 1 < frames.size(); i++) {
         Feature feature;
         feature.hasTimestamp = true;
         feature.timestamp = Vamp::RealTime::frame2RealTime(frames[i]*(128.*6.), m_inputSampleRate);//featureSet[3][i];
