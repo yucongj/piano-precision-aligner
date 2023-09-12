@@ -46,9 +46,18 @@ bool AudioToScoreAligner::loadAScore(string scoreName, int blockSize)
         std::cerr << "Score file (.solo) not found:" << scorePath << '\n';
         return false;
     }
+    std::filesystem::path scoreTempoPath = string(targetPath) + "/" + scoreName + ".tempo";
+    if (!exists(scoreTempoPath)) {
+        std::cerr << "Score tempo file (.tempo) not found:" << scoreTempoPath << '\n';
+        return false;
+    }
 
     string testScorePath = string(scorePath);
     std::cerr << "In loadAScore: testScorePath is -> " << testScorePath << '\n';
+    
+    string testScoreTempoPath = string(scoreTempoPath);
+    std::cerr << "In loadAScore: testScoreTempoPath is -> " << testScoreTempoPath << '\n';
+    
 
 /*
     string testScorePath = "/Users/yjiang3/Desktop/Pilot/BothHandsC/BothHandsC.solo";
@@ -70,9 +79,14 @@ bool AudioToScoreAligner::loadAScore(string scoreName, int blockSize)
     */
 
     bool success = m_score.initialize(testScorePath);
+    if (success) {
+        success = m_score.readTempo(testScoreTempoPath);
+    }
+
     NoteTemplates t =
         CreateNoteTemplates::getNoteTemplates(m_inputSampleRate, blockSize);
     m_score.setEventTemplates(t);
+
     return success;
 }
 

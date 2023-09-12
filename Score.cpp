@@ -104,6 +104,74 @@ bool Score::initialize(string scoreFilePath)
     return true;
 }
 
+
+// Read in the tempo information and assign a tempo value for each event in MusicalEvent
+bool Score::readTempo(string tempoFilePath)
+{
+    string line;
+    MeasureInfo mi(0, Fraction(), Fraction());
+    TempoChange currentTempo(mi, 120.0, 1.0); // to be replaced later
+
+    ifstream tempoFile(tempoFilePath);
+    if (!tempoFile.good()) {
+        cerr<<"Cannot open file "<<tempoFilePath<<"\n";
+        return false;
+    }
+
+    while (getline(tempoFile, line)) {
+        istringstream iss(line);
+
+        // measure+Position
+        string measureAndPosition;
+        getline(iss, measureAndPosition, '\t');
+        string mn, mp;
+        istringstream measureString(measureAndPosition);
+        getline(measureString, mn, '+');
+        getline(measureString, mp, '+');
+        int measureNumber = stoi(mn);
+        Fraction measurePosition = Fraction::fromString(mp);
+
+        // tempo value
+        string tempoString;
+        getline(iss, tempoString, '\t');
+        float tempo = stof(tempoString);
+
+        // note length for the tempo
+        string nlString;
+        getline(iss, nlString, '\t');
+        float noteLength = stof(nlString);
+
+        m_tempoChanges.push_back(TempoChange(MeasureInfo(measureNumber,
+         measurePosition, measurePosition), tempo, noteLength)); // dummy measureFraction
+    }
+    // Set all events with the default tempo
+    for (int count = 0; count < m_musicalEvents.size(); count++) {
+        m_musicalEvents[count].tempo = 120.; // default tempo
+    }
+
+    // Apply any tempo changes to relevant events
+    for (int count = 0; count + 1 < m_tempoChanges.size(); count++) {
+        TempoChange start = m_tempoChanges[count];
+        TempoChange end = m_tempoChanges[count+1];
+        for (auto &event: m_musicalEvents)
+            if (event.measureInfo >= start.measureInfo && event.measureInfo < end.measureInfo)
+                event.tempo = start.newTempo * start.noteLength;
+    }
+    if (m_tempoChanges.size() > 0) {
+        TempoChange last = m_tempoChanges[m_tempoChanges.size()-1];
+        for (auto &event: m_musicalEvents)
+            if (event.measureInfo >= last.measureInfo)
+                event.tempo = last.newTempo * last.noteLength;
+    }
+    // testing:
+    for (auto &event: m_musicalEvents) {
+        cerr<<"***TEMPO: "<<event.measureInfo.measureNumber<<"+"
+                 <<event.measureInfo.measurePosition<<" -> "<<event.tempo<<endl;
+    }
+
+    return true;
+}
+
 std::ostream& operator<<(std::ostream &strm, Fraction &f) {
    return strm << to_string(f.numerator) << "/" << to_string(f.denominator);
 }

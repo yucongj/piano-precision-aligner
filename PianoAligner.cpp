@@ -338,11 +338,11 @@ PianoAligner::initialise(size_t channels, size_t stepSize, size_t blockSize)
     }
     
     if (m_aligner->loadAScore(m_scoreName, blockSize)) {
-	return true;
+	    return true;
     } else {
         std::cerr << "PianoAligner::initialise: Failed to load score "
 		  << m_scoreName << std::endl;
-	return false;
+	    return false;
     }
 }
 
@@ -441,6 +441,7 @@ PianoAligner::getRemainingFeatures()
     AudioToScoreAligner::AlignmentResults alignmentResults = m_aligner->align();
     Score::MusicalEventList eventList = m_aligner->getScore().getMusicalEvents();
     int event = 0;
+    int cumulativeTick = 0;
 
     for (const auto& frame: alignmentResults) {
         Feature feature;
@@ -451,14 +452,23 @@ PianoAligner::getRemainingFeatures()
         // Calculate label:
         feature.label = to_string(info.measureNumber);
         feature.label += "+" + to_string(info.measurePosition.numerator) + "/" + to_string(info.measurePosition.denominator);
-        // Calculate score position:
-        feature.values.push_back(info.measureFraction.numerator * 2000 / info.measureFraction.denominator);
-
+        
+        // Calculate tick:
+        // TODO: check divide-by-zero for eventList[event].temp and info.measureFraction.denominator
+        if (event == 0) {
+            cumulativeTick = info.measureFraction.numerator * 2000 *
+             (120.0 / eventList[event].tempo) / info.measureFraction.denominator;
+        } else {
+            Fraction duration = info.measureFraction - eventList[event-1].measureInfo.measureFraction;
+            int value = duration.numerator * 2000 * (120.0 / eventList[event].tempo) / duration.denominator;
+            cumulativeTick += value;
+        }
+        // feature.values.push_back(info.measureFraction.numerator * 2000 / info.measureFraction.denominator);
+        feature.values.push_back(cumulativeTick);
         featureSet[3].push_back(feature);
         frames.push_back(frame);
         event++;
     }
-
 
 /*
     // Show onsets. TODO: deal with this part in SimpleHMM instead of here.
