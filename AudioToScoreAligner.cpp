@@ -5,6 +5,7 @@
 
 #include "AudioToScoreAligner.h"
 #include "Templates.h"
+#include "Paths.h"
 #include "SimpleHMM.h"
 
 #include <cmath>
@@ -24,63 +25,23 @@ AudioToScoreAligner::~AudioToScoreAligner()
 bool AudioToScoreAligner::loadAScore(string scoreName, int blockSize)
 {
     std::cerr << "In loadAScore: scoreName is -> " << scoreName << '\n';
-    std::filesystem::path scoreDir = string(getenv("HOME")) + "/Documents/SV-PianoPrecision/Scores";
-    if (!exists(scoreDir)) {
-        std::cerr << "Score directory ($Home/Documents/SV-PianoPrecision/Scores) does not exist!" << '\n';
+
+    auto scores = Paths::getScores();
+
+    if (scores.find(scoreName) == scores.end()) {
+        std::cerr << "Score not found: " << scoreName << '\n';
         return false;
     }
-    std::filesystem::path targetPath;
-    for (const auto& entry : std::filesystem::directory_iterator(scoreDir)) {
-        string folderName = string(entry.path().filename());
-        if (folderName == scoreName) {
-            targetPath = entry.path();
-            break;
-        }
-    }
-    if (!exists(targetPath)) {
-        std::cerr << "Score folder not found: " << targetPath << '\n';
-        return false;
-    }
+
+    std::filesystem::path targetPath = scores[scoreName];
+
+    // Paths::getScores() has already verified that these exist
     std::filesystem::path scorePath = string(targetPath) + "/" + scoreName + ".solo";
-    if (!exists(scorePath)) {
-        std::cerr << "Score file (.solo) not found:" << scorePath << '\n';
-        return false;
-    }
     std::filesystem::path scoreTempoPath = string(targetPath) + "/" + scoreName + ".tempo";
-    if (!exists(scoreTempoPath)) {
-        std::cerr << "Score tempo file (.tempo) not found:" << scoreTempoPath << '\n';
-        return false;
-    }
 
-    string testScorePath = string(scorePath);
-    std::cerr << "In loadAScore: testScorePath is -> " << testScorePath << '\n';
-    
-    string testScoreTempoPath = string(scoreTempoPath);
-    std::cerr << "In loadAScore: testScoreTempoPath is -> " << testScoreTempoPath << '\n';
-    
-
-/*
-    string testScorePath = "/Users/yjiang3/Desktop/Pilot/BothHandsC/BothHandsC.solo";
-    if (scoreName == "BothHandsC") {
-        testScorePath = "/Users/yjiang3/Desktop/Pilot/BothHandsC/BothHandsC.solo";
-    } else if (scoreName == "ContraryArpeggioC") {
-        testScorePath = "/Users/yjiang3/Desktop/Pilot/ContraryArpeggioC/ContraryArpeggioC.solo";
-    } else if (scoreName == "ContraryC") {
-        testScorePath = "/Users/yjiang3/Desktop/Pilot/ContraryC/ContraryC.solo";
-    } else if (scoreName == "LeftHandOnlyC") {
-        testScorePath = "/Users/yjiang3/Desktop/Pilot/LeftHandOnlyC/LeftHandOnlyC.solo";
-    } else if (scoreName == "OneHandOnlyArpeggioC") {
-        testScorePath = "/Users/yjiang3/Desktop/Pilot/OneHandOnlyArpeggioC/OneHandOnlyArpeggioC.solo";
-    } else if (scoreName == "RightHandOnlyC") {
-        testScorePath = "/Users/yjiang3/Desktop/Pilot/RightHandOnlyC/RightHandOnlyC.solo";
-    } else {
-        std::cerr << "scoreName not found in AudioToScoreAligner::loadAScore" << '\n';
-    }
-    */
-
-    bool success = m_score.initialize(testScorePath);
+    bool success = m_score.initialize(scorePath);
     if (success) {
-        success = m_score.readTempo(testScoreTempoPath);
+        success = m_score.readTempo(scoreTempoPath);
     }
 
     NoteTemplates t =

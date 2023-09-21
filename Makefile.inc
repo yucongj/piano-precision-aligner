@@ -29,11 +29,11 @@ PLUGIN_LIBRARY_NAME := score-aligner
 
 # Edit this to list the .cpp or .c files in your plugin project
 #
-PLUGIN_SOURCES := PianoAligner.cpp Score.cpp AudioToScoreAligner.cpp plugins.cpp Templates.cpp SimpleHMM.cpp
+PLUGIN_SOURCES := PianoAligner.cpp Score.cpp AudioToScoreAligner.cpp plugins.cpp Templates.cpp SimpleHMM.cpp Paths.cpp
 
 # Edit this to list the .h files in your plugin project
 #
-PLUGIN_HEADERS := PianoAligner.h Score.h AudioToScoreAligner.cpp Templates.h SimpleHMM.h
+PLUGIN_HEADERS := PianoAligner.h Score.h AudioToScoreAligner.cpp Templates.h SimpleHMM.h Paths.h
 
 
 ##  Normally you should not edit anything below this line

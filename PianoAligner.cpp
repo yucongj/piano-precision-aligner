@@ -6,6 +6,7 @@
 #include "AudioToScoreAligner.h"
 
 #include "Templates.h"
+#include "Paths.h"
 #include "Score.h" // delete later
 #include <cmath> // delete later
 #include <filesystem>
@@ -166,17 +167,13 @@ PianoAligner::getPrograms() const
 {
     ProgramList list;
 
-    std::filesystem::path scoreDir = string(getenv("HOME")) + "/Documents/SV-PianoPrecision/Scores";
-    if (!exists(scoreDir)) {
-        std::cerr << "Score directory ($Home/Documents/SV-PianoPrecision/Scores) does not exist!" << '\n';
-        return list;
-    }
-    std::filesystem::path targetPath;
-    for (const auto& entry : std::filesystem::directory_iterator(scoreDir)) {
-        string folderName = string(entry.path().filename());
-        if (folderName[0] == '.') continue;
-        list.push_back(folderName);
-        std::cerr << folderName << '\n';
+    auto scores = Paths::getScores();
+
+    std::cerr << "PianoAligner::getPrograms: have " << scores.size() << " scores" << std::endl;
+
+    for (auto score : scores) {
+        std::cerr << "PianoAligner::getPrograms: score " << score.first << std::endl;
+        list.push_back(score.first);
     }
 
     // If you have no programs, return an empty list (or simply don't
