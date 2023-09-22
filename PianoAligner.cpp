@@ -438,7 +438,10 @@ PianoAligner::getRemainingFeatures()
     AudioToScoreAligner::AlignmentResults alignmentResults = m_aligner->align();
     Score::MusicalEventList eventList = m_aligner->getScore().getMusicalEvents();
     int event = 0;
-    int cumulativeTick = 0;
+    int lastChange = 0; // last event index that defines a new tempo
+    float lastChangeTick = 0; // tick for the last event that defines a new tempo
+    float lastTempo = 0; // will be set in the for loop below
+    float currentTick = 0;
 
     for (const auto& frame: alignmentResults) {
         Feature feature;
@@ -453,15 +456,21 @@ PianoAligner::getRemainingFeatures()
         // Calculate tick:
         // TODO: check divide-by-zero for eventList[event].temp and info.measureFraction.denominator
         if (event == 0) {
-            cumulativeTick = info.measureFraction.numerator * 2000 *
-             (120.0 / eventList[event].tempo) / info.measureFraction.denominator;
+            lastTempo = eventList[0].tempo;
+            lastChangeTick = 0;
         } else {
-            Fraction duration = info.measureFraction - eventList[event-1].measureInfo.measureFraction;
-            int value = duration.numerator * 2000 * (120.0 / eventList[event].tempo) / duration.denominator;
-            cumulativeTick += value;
+            float currentTempo = eventList[event].tempo;
+            Fraction duration = info.measureFraction - eventList[lastChange].measureInfo.measureFraction;
+            currentTick = lastChangeTick + duration.numerator * 2000. * (120. / lastTempo) / duration.denominator;
+            if (abs(currentTempo - lastTempo) > 0.001) { // encountering a tempo change
+                lastTempo = currentTempo;
+                lastChange = event;
+                lastChangeTick = currentTick;
+            }
         }
+        std::cerr<<"***TICKS: "<<feature.label<<" -> "<<currentTick<<std::endl;
         // feature.values.push_back(info.measureFraction.numerator * 2000 / info.measureFraction.denominator);
-        feature.values.push_back(cumulativeTick);
+        feature.values.push_back(currentTick);
         featureSet[3].push_back(feature);
         frames.push_back(frame);
         event++;
