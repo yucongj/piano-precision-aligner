@@ -15,8 +15,7 @@
 
 using namespace std;
 
-Score::Score() : m_timeSignatureNumer{4}, m_timeSignatureDenom{4},
- m_defaultTempo{120.}//120.
+Score::Score() : m_timeSignatureNumer{4}, m_timeSignatureDenom{4}
 {
 }
 
@@ -146,7 +145,7 @@ bool Score::readTempo(string tempoFilePath)
     }
     // Set all events with the default tempo
     for (int count = 0; count < m_musicalEvents.size(); count++) {
-        m_musicalEvents[count].tempo = 120.; // default tempo
+        m_musicalEvents[count].tempo = 120.; // default tempo is "quarter note = 120."
     }
 
     // Apply any tempo changes to relevant events
@@ -179,11 +178,6 @@ std::ostream& operator<<(std::ostream &strm, Fraction &f) {
 const Score::MusicalEventList& Score::getMusicalEvents() const
 {
     return m_musicalEvents;
-}
-
-double Score::getDefaultTempo() const
-{
-    return m_defaultTempo;
 }
 
 int Score::getTimeSignatureNumer() const

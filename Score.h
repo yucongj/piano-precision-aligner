@@ -166,7 +166,6 @@ public:
     bool readTempo(string tempoFilePath);
 
     const MusicalEventList& getMusicalEvents() const;
-    double getDefaultTempo() const; // delete
     int getTimeSignatureNumer() const; // delete
     int getTimeSignatureDenom() const; // delete
 
@@ -175,7 +174,6 @@ public:
 private:
     int m_timeSignatureNumer; // TODO: read the .meter file
     int m_timeSignatureDenom; // TODO: read the .meter file
-    double m_defaultTempo; // TODO: incorporate tempo changes in alignment algorithm
     MusicalEventList m_musicalEvents;
     TempoChangeList m_tempoChanges;
     MeterList m_meters;
