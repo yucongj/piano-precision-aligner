@@ -62,13 +62,13 @@ Paths::getScores()
         for (auto entry : directory_iterator(dir)) {
 
             path candidate = entry.path();
-            string name(candidate.filename());
+            string name(candidate.filename().string());
             if (name.size() == 0 || name[0] == '.' ||
                 scores.find(name) != scores.end()) {
                 continue;
             }
 
-            path scoreFile(string(candidate) + "/" + name + ".solo");
+            path scoreFile(candidate.string() + "/" + name + ".solo");
             if (!exists(scoreFile)) {
                 cerr << "WARNING: Candidate score folder "
                      << candidate << " lacks " << name << ".solo file"
@@ -76,7 +76,7 @@ Paths::getScores()
                 continue;
             }
 
-            path tempoFile(string(candidate) + "/" + name + ".tempo");
+            path tempoFile(candidate.string() + "/" + name + ".tempo");
             if (!exists(tempoFile)) {
                 cerr << "WARNING: Candidate score folder "
                      << candidate << " lacks " << name << ".tempo file"
