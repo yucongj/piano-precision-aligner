@@ -17,8 +17,6 @@ SimpleHMM::SimpleHMM(AudioToScoreAligner& aligner) : m_aligner{aligner}
     // Build the state graph: m_nextStates and m_prevStates.
     Score score = m_aligner.getScore();
     Score::MusicalEventList events = score.getMusicalEvents();
-    // float tempo = score.getDefaultTempo();
-    int denom = score.getTimeSignatureDenom();
     float sr = m_aligner.getSampleRate();
     int hopSize = m_aligner.getHopSize();
     if (hopSize == 0) {
@@ -42,7 +40,7 @@ SimpleHMM::SimpleHMM(AudioToScoreAligner& aligner) : m_aligner{aligner}
         if (event.tempo == 0.0) {
             std::cerr << "In SimpleHMM: event.tempo is zero!!!" << '\n';
         }
-        double secs = event.duration.getValue() * denom * 60. / event.tempo;
+        double secs = event.duration.getValue() * 4 * 60. / event.tempo; // tempo is defined in quarter note
         double frames = secs * sr / (double)hopSize;
         double var = (0.25*0.25) * frames * frames;
         int M = round(frames*frames / (var + frames));
