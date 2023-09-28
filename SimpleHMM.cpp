@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <map>
+#include <algorithm>
 
 static const int BEAM_SEARCH_WIDTH = 200;
 
