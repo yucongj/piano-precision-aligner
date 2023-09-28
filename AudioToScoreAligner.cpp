@@ -36,9 +36,9 @@ bool AudioToScoreAligner::loadAScore(string scoreName, int blockSize)
     std::filesystem::path targetPath = scores[scoreName];
 
     // Paths::getScores() has already verified that these exist
-    std::filesystem::path scorePath = string(targetPath) + "/" + scoreName + ".solo";
-    std::filesystem::path scoreTempoPath = string(targetPath) + "/" + scoreName + ".tempo";
-    std::filesystem::path scoreMeterPath = string(targetPath) + "/" + scoreName + ".meter";
+    std::string scorePath = targetPath.string() + "/" + scoreName + ".solo";
+    std::string scoreTempoPath = targetPath.string() + "/" + scoreName + ".tempo";
+    std::string scoreTempoPath = targetPath.string() + "/" + scoreName + ".meter";
 
     bool success = m_score.initialize(scorePath);
     if (success)    success = m_score.readTempo(scoreTempoPath);
