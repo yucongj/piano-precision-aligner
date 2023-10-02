@@ -15,7 +15,7 @@
 
 using namespace std;
 
-Score::Score() : m_timeSignatureNumer{4}, m_timeSignatureDenom{4}
+Score::Score()
 {
 }
 
@@ -109,7 +109,7 @@ bool Score::readTempo(string tempoFilePath)
 {
     string line;
     MeasureInfo mi(0, Fraction(), Fraction());
-    TempoChange currentTempo(mi, 120.0, 1.0); // to be replaced later
+    TempoChange currentTempo(mi, 120.0, 1.0); // to be replaced soon
 
     ifstream tempoFile(tempoFilePath);
     if (!tempoFile.good()) {
@@ -171,6 +171,73 @@ bool Score::readTempo(string tempoFilePath)
     return true;
 }
 
+
+// Read in the meter information and assign a meter value for each event in MusicalEvent
+bool Score::readMeter(string meterFilePath)
+{
+    string line;
+    MeterChange currentMeter(0, 0, 0); // to be replaced soon
+
+    ifstream meterFile(meterFilePath);
+    if (!meterFile.good()) {
+        cerr<<"Cannot open file "<<meterFilePath<<"\n";
+        return false;
+    }
+
+    while (getline(meterFile, line)) {
+        istringstream iss(line);
+
+        // measure num
+        string mString;
+        getline(iss, mString, '\t');
+        int measureNum = stoi(mString);
+
+        // meter
+        string meterString;
+        getline(iss, meterString, '\t');
+        string n, d;
+        istringstream meter(meterString);
+        getline(meter, n, '/');
+        getline(meter, d, '/');
+        int meterNume = stoi(n);
+        int meterDeno = stoi(d);
+
+        m_meterChanges.push_back(MeterChange(measureNum, meterNume, meterDeno));
+    }
+
+    if (m_meterChanges.empty()) {
+        cerr<<"ERROR in Score::readMeter: meterChanges is empty!";
+        return false;
+    }
+
+    // Apply any meter changes to relevant events
+    for (int count = 0; count + 1 < m_meterChanges.size(); count++) {
+        MeterChange start = m_meterChanges[count];
+        MeterChange end = m_meterChanges[count+1];
+        for (auto &event: m_musicalEvents)
+            if (event.measureInfo.measureNumber >= start.measureNumber &&
+             event.measureInfo.measureNumber < end.measureNumber) {
+                event.meterNumer = start.numer;
+                event.meterDenom = start.denom;
+            }
+    }
+
+    MeterChange last = m_meterChanges[m_meterChanges.size()-1];
+    for (auto &event: m_musicalEvents)
+        if (event.measureInfo.measureNumber >= last.measureNumber) {
+            event.meterNumer = last.numer;
+            event.meterDenom = last.denom;
+        }
+    // testing:
+    for (auto &event: m_musicalEvents) {
+        cerr<<"***METER: "<<event.measureInfo.measureNumber<<"+"
+                 <<event.measureInfo.measurePosition<<" -> "<<
+                 event.meterNumer<<"/"<<event.meterDenom<<endl;
+    }
+
+    return true;
+}
+
 std::ostream& operator<<(std::ostream &strm, Fraction &f) {
    return strm << to_string(f.numerator) << "/" << to_string(f.denominator);
 }
@@ -178,16 +245,6 @@ std::ostream& operator<<(std::ostream &strm, Fraction &f) {
 const Score::MusicalEventList& Score::getMusicalEvents() const
 {
     return m_musicalEvents;
-}
-
-int Score::getTimeSignatureNumer() const
-{
-    return m_timeSignatureNumer;
-}
-
-int Score::getTimeSignatureDenom() const
-{
-    return m_timeSignatureDenom;
 }
 
 void Score::setEventTemplates(NoteTemplates& t)

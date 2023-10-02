@@ -134,6 +134,8 @@ public:
         Template eventTemplate;
         Fraction duration;
         float tempo; // e.g., Quarter note = 120.0
+        int meterNumer; // e.g., 3
+        int meterDenom; // e.g., 4
 
         MusicalEvent(MeasureInfo mi) : measureInfo{mi} { }
     };
@@ -149,34 +151,31 @@ public:
          newTempo{t}, noteLength{n} { }
     };
 
-    struct Meter
+    struct MeterChange
     {
         int measureNumber;
-        Fraction meter;
+        int numer;
+        int denom;
 
-        Meter(int mn, Fraction meter): measureNumber{mn},
-         meter{meter} { }
+        MeterChange(int mn, int n, int d): measureNumber{mn}, numer{n}, denom{d} { }
     };
 
     typedef vector<MusicalEvent> MusicalEventList;
     typedef vector<TempoChange> TempoChangeList;
-    typedef vector<Meter> MeterList;
+    typedef vector<MeterChange> MeterChangeList;
 
     bool initialize(string scoreFilePath);
     bool readTempo(string tempoFilePath);
+    bool readMeter(string meterFilePath);
 
     const MusicalEventList& getMusicalEvents() const;
-    int getTimeSignatureNumer() const; // delete
-    int getTimeSignatureDenom() const; // delete
 
     void setEventTemplates(NoteTemplates& t);
 
 private:
-    int m_timeSignatureNumer; // TODO: read the .meter file
-    int m_timeSignatureDenom; // TODO: read the .meter file
     MusicalEventList m_musicalEvents;
     TempoChangeList m_tempoChanges;
-    MeterList m_meters;
+    MeterChangeList m_meterChanges;
 };
 
 #endif
