@@ -42,7 +42,7 @@ Paths::getScoreDirectories()
     } else {
         auto home = getenv("HOME");
         if (!home) return {};
-        pp.push_back(path(string(home) + "/Documents/SV-PianoPrecision/Scores"));
+        pp.push_back(path(string(home) + "/Documents/PianoPrecision/Scores"));
     }
     return pp;
 }
