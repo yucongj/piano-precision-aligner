@@ -441,7 +441,7 @@ PianoAligner::getRemainingFeatures()
     int lastChange = 0; // last event index that defines a new tempo
     float lastChangeTick = 0; // tick for the last event that defines a new tempo
     float lastTempo = 0; // will be set in the for loop below
-    float currentTick = 0;
+    float currentTick = -1; // will be set in the first iteration
 
     for (const auto& frame: alignmentResults) {
         Feature feature;
@@ -457,7 +457,9 @@ PianoAligner::getRemainingFeatures()
         // TODO: check divide-by-zero for eventList[event].temp and info.measureFraction.denominator
         if (event == 0) {
             lastTempo = eventList[0].tempo;
-            lastChangeTick = 0;
+            currentTick = info.measureFraction.numerator * 2000. * (120. / lastTempo) 
+            / info.measureFraction.denominator; // in case the first event is e.g., 1+1/8 in stead of 1+0/1
+            lastChangeTick = currentTick;
         } else {
             float currentTempo = eventList[event].tempo;
             Fraction duration = info.measureFraction - eventList[lastChange].measureInfo.measureFraction;
