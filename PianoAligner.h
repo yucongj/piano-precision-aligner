@@ -55,6 +55,14 @@ protected:
     // plugin-specific data and methods go here
     AudioToScoreAligner *m_aligner;
     int m_blockSize;
+
+    // Constraints for partial alignments. In each case a value of -1
+    // indicates no constraint of that type. The defaults are all -1.
+    float m_scorePositionStart;
+    float m_scorePositionEnd;
+    float m_audioStart_sec;
+    float m_audioEnd_sec;
+    
     bool m_isFirstFrame;
     Vamp::RealTime m_firstFrameTime;
     int m_frameCount;

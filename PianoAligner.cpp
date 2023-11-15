@@ -14,13 +14,14 @@
 
 PianoAligner::PianoAligner(float inputSampleRate) :
     Plugin(inputSampleRate),
-    m_blockSize(0),
     m_aligner(nullptr),
+    m_blockSize(0),
+    m_scorePositionStart(-1.f),
+    m_scorePositionEnd(-1.f),
+    m_audioStart_sec(-1.f),
+    m_audioEnd_sec(-1.f),
     m_isFirstFrame(true),
     m_frameCount(0)
-    // Also be sure to set your plugin parameters (presumably stored
-    // in member variables) to their default values here -- the host
-    // will not do that for you
 {
 }
 
@@ -124,22 +125,45 @@ PianoAligner::getParameterDescriptors() const
     // they have not changed in the mean time.
 
     ParameterDescriptor d;
-    d.identifier = "parameter";
-    d.name = "Some Parameter"; // "Choice of score"
+
+    d.identifier = "score-position-start";
+    d.name = "Score Position - Start";
     d.description = "";
     d.unit = "";
-    d.minValue = 0;
-    d.maxValue = 10; // 4
-    d.defaultValue = 5; // 0
-    d.isQuantized = false; // true
-    /*
-    d.quantizeStep = 1; // added
-    d.valueNames.push_back("C major scale");
-    d.valueNames.push_back("BEAM_SEARCH_WIDTH");
-    d.valueNames.push_back("C major scale right hand");
-    d.valueNames.push_back("D major scale");
-    d.valueNames.push_back("E major scale");
-    */
+    d.minValue = -1.f;
+    d.maxValue = 100000.f;
+    d.defaultValue = -1.f;
+    d.isQuantized = false;
+    list.push_back(d);
+
+    d.identifier = "score-position-end";
+    d.name = "Score Position - End";
+    d.description = "";
+    d.unit = "";
+    d.minValue = -1.f;
+    d.maxValue = 100000.f;
+    d.defaultValue = -1.f;
+    d.isQuantized = false;
+    list.push_back(d);
+
+    d.identifier = "audio-start";
+    d.name = "Audio - Start";
+    d.description = "";
+    d.unit = "s";
+    d.minValue = -1.f;
+    d.maxValue = 3600.f;
+    d.defaultValue = -1.f;
+    d.isQuantized = false;
+    list.push_back(d);
+
+    d.identifier = "audio-end";
+    d.name = "Audio - End";
+    d.description = "";
+    d.unit = "s";
+    d.minValue = -1.f;
+    d.maxValue = 3600.f;
+    d.defaultValue = -1.f;
+    d.isQuantized = false;
     list.push_back(d);
 
     return list;
@@ -148,8 +172,14 @@ PianoAligner::getParameterDescriptors() const
 float
 PianoAligner::getParameter(string identifier) const
 {
-    if (identifier == "parameter") { // if (identifier == "score")
-        return 5; // return the ACTUAL current value of your parameter here!
+    if (identifier == "score-position-start") {
+        return m_scorePositionStart;
+    } else if (identifier == "score-position-end") {
+        return m_scorePositionEnd;
+    } else if (identifier == "audio-start") {
+        return m_audioStart_sec;
+    } else if (identifier == "audio-end") {
+        return m_audioEnd_sec;
     }
     return 0;
 }
@@ -157,8 +187,14 @@ PianoAligner::getParameter(string identifier) const
 void
 PianoAligner::setParameter(string identifier, float value)
 {
-    if (identifier == "parameter") {
-        // set the actual value of your parameter
+    if (identifier == "score-position-start") {
+        m_scorePositionStart = value;
+    } else if (identifier == "score-position-end") {
+        m_scorePositionEnd = value;
+    } else if (identifier == "audio-start") {
+        m_audioStart_sec = value;
+    } else if (identifier == "audio-end") {
+        m_audioEnd_sec = value;
     }
 }
 
@@ -309,6 +345,11 @@ PianoAligner::initialise(size_t channels, size_t stepSize, size_t blockSize)
 
     m_isFirstFrame = true;
 
+    std::cerr << "PianoAligner::initialise: score position start = "
+              << m_scorePositionStart << ", end = " << m_scorePositionEnd
+              << ", audio start = " << m_audioStart_sec << ", end = "
+              << m_audioEnd_sec << std::endl;
+    
     // Real initialisation work goes here!
 
     m_aligner = new AudioToScoreAligner(m_inputSampleRate, stepSize);
@@ -499,7 +540,7 @@ PianoAligner::getRemainingFeatures()
     */
 
     // Show local tempo. TODO: deal with this part in SimpleHMM instead of here.
-    for (int i = 0; i + 1 < frames.size(); i++) {
+    for (int i = 0; i + 1 < int(frames.size()); i++) {
         Feature feature;
         feature.hasTimestamp = true;
         feature.timestamp = Vamp::RealTime::frame2RealTime(frames[i]*(128.*6.), m_inputSampleRate);//featureSet[3][i];
