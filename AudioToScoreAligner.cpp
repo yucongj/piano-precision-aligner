@@ -13,8 +13,10 @@
 #include <vector>
 
 
-AudioToScoreAligner::AudioToScoreAligner(float inputSampleRate, int hopSize) :
-    m_inputSampleRate{inputSampleRate} , m_hopSize{hopSize}
+AudioToScoreAligner::AudioToScoreAligner(float inputSampleRate, int hopSize,
+int startEvent, int endEvent, int startFrame, int endFrame) :
+     m_inputSampleRate{inputSampleRate} , m_hopSize{hopSize}, m_startEvent{startEvent}, 
+     m_endEvent{endEvent}, m_startFrame{startFrame}, m_endFrame{endFrame}
 {
 }
 
@@ -43,6 +45,7 @@ bool AudioToScoreAligner::loadAScore(string scoreName, int blockSize)
     bool success = m_score.initialize(scorePath);
     if (success)    success = m_score.readTempo(scoreTempoPath);
     if (success)    success = m_score.readMeter(scoreMeterPath);
+    if (success)    m_score.calculateTicks();
 
     NoteTemplates t =
         CreateNoteTemplates::getNoteTemplates(m_inputSampleRate, blockSize);

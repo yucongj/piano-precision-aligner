@@ -18,7 +18,8 @@ using std::vector;
 class AudioToScoreAligner
 {
 public:
-    AudioToScoreAligner(float inputSampleRate, int hopSize);
+    AudioToScoreAligner(float inputSampleRate, int hopSize,
+     int m_startEvent, int m_endEvent, int m_startFrame, int m_endFrame);
     ~AudioToScoreAligner();
 
 /*
@@ -55,6 +56,10 @@ private:
     DataLikelihoods m_likelihoods;
     DataLikelihoods m_silenceLikelihoods;
     DataFeatures m_dataFeatures;
+    int m_startEvent;
+    int m_endEvent;
+    int m_startFrame;
+    int m_endFrame;
 
     void initializeLikelihoods();
 };

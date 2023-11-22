@@ -352,7 +352,7 @@ PianoAligner::initialise(size_t channels, size_t stepSize, size_t blockSize)
     
     // Real initialisation work goes here!
 
-    m_aligner = new AudioToScoreAligner(m_inputSampleRate, stepSize);
+    m_aligner = new AudioToScoreAligner(m_inputSampleRate, stepSize, -1, -1, -1, -1); // -1 means aligment constraints not set yet
     m_blockSize = blockSize;
 
     if (m_scoreName == "") {
@@ -473,17 +473,16 @@ PianoAligner::getRemainingFeatures()
     }
 */
 
+    Score::MusicalEventList eventList = m_aligner->getScore().getMusicalEvents();
+    
+    // set alignment constraints through m_start/endEvent and m_start/endFrame
+    // TODO
+
 
     // Window version:
     vector<int> frames;
     AudioToScoreAligner::AlignmentResults alignmentResults = m_aligner->align();
-    Score::MusicalEventList eventList = m_aligner->getScore().getMusicalEvents();
     int event = 0;
-    int lastChange = 0; // last event index that defines a new tempo
-    float lastChangeTick = 0; // tick for the last event that defines a new tempo
-    float lastTempo = 0; // will be set in the for loop below
-    float currentTick = -1; // will be set in the first iteration
-
     for (const auto& frame: alignmentResults) {
         Feature feature;
         feature.hasTimestamp = true;
@@ -494,26 +493,8 @@ PianoAligner::getRemainingFeatures()
         feature.label = to_string(info.measureNumber);
         feature.label += "+" + to_string(info.measurePosition.numerator) + "/" + to_string(info.measurePosition.denominator);
         
-        // Calculate tick:
-        // TODO: check divide-by-zero for eventList[event].temp and info.measureFraction.denominator
-        if (event == 0) {
-            lastTempo = eventList[0].tempo;
-            currentTick = info.measureFraction.numerator * 2000. * (120. / lastTempo) 
-            / info.measureFraction.denominator; // in case the first event is e.g., 1+1/8 in stead of 1+0/1
-            lastChangeTick = currentTick;
-        } else {
-            float currentTempo = eventList[event].tempo;
-            Fraction duration = info.measureFraction - eventList[lastChange].measureInfo.measureFraction;
-            currentTick = lastChangeTick + duration.numerator * 2000. * (120. / lastTempo) / duration.denominator;
-            if (abs(currentTempo - lastTempo) > 0.001) { // encountering a tempo change
-                lastTempo = currentTempo;
-                lastChange = event;
-                lastChangeTick = currentTick;
-            }
-        }
-        std::cerr<<"***TICKS: "<<feature.label<<" -> "<<currentTick<<std::endl;
-        // feature.values.push_back(info.measureFraction.numerator * 2000 / info.measureFraction.denominator);
-        feature.values.push_back(currentTick);
+        std::cerr<<"***TICKS: "<<feature.label<<" -> "<<eventList[event].tick<<std::endl;
+        feature.values.push_back(eventList[event].tick);
         featureSet[3].push_back(feature);
         frames.push_back(frame);
         event++;
@@ -539,6 +520,7 @@ PianoAligner::getRemainingFeatures()
     }
     */
 
+/* Commented out on Nov 20, 2023
     // Show local tempo. TODO: deal with this part in SimpleHMM instead of here.
     for (int i = 0; i + 1 < int(frames.size()); i++) {
         Feature feature;
@@ -576,7 +558,7 @@ PianoAligner::getRemainingFeatures()
         }
         featureSet[2].push_back(feature);
     }
-
+*/
 
 
     //Testing note templates:
