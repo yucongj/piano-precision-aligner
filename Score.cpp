@@ -144,12 +144,12 @@ bool Score::readTempo(string tempoFilePath)
          measurePosition, measurePosition), tempo, noteLength)); // dummy measureFraction
     }
     // Set all events with the default tempo
-    for (int count = 0; count < m_musicalEvents.size(); count++) {
+    for (int count = 0; count < int(m_musicalEvents.size()); count++) {
         m_musicalEvents[count].tempo = 120.; // default tempo is "quarter note = 120."
     }
 
     // Apply any tempo changes to relevant events
-    for (int count = 0; count + 1 < m_tempoChanges.size(); count++) {
+    for (int count = 0; count + 1 < int(m_tempoChanges.size()); count++) {
         TempoChange start = m_tempoChanges[count];
         TempoChange end = m_tempoChanges[count+1];
         for (auto &event: m_musicalEvents)
@@ -211,7 +211,7 @@ bool Score::readMeter(string meterFilePath)
     }
 
     // Apply any meter changes to relevant events
-    for (int count = 0; count + 1 < m_meterChanges.size(); count++) {
+    for (int count = 0; count + 1 < int(m_meterChanges.size()); count++) {
         MeterChange start = m_meterChanges[count];
         MeterChange end = m_meterChanges[count+1];
         for (auto &event: m_musicalEvents)

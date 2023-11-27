@@ -48,6 +48,7 @@ public:
     Score getScore() const;
     DataFeatures getDataFeatures() const;
     double getLikelihood(int frameIndex, int eventIndex);
+    void setAlignmentConstraints(int se, int ee, int sf, int ef);
 
 private:
     float m_inputSampleRate;

@@ -116,7 +116,7 @@ double AudioToScoreAligner::getLikelihood(int frame, int event)
     if (event < 0) {
         if(!m_silenceLikelihoods[frame][std::abs(event)-1].calculated) {
             double score = 0;
-            for (int bin = 0; bin < m_dataFeatures[frame].size(); bin++) {
+            for (int bin = 0; bin < int(m_dataFeatures[frame].size()); bin++) {
                 score += m_dataFeatures[frame][bin]*log(silenceTemplate[bin]);
                 /*
                 if (frame == 2 && event == -1) {
@@ -144,7 +144,7 @@ double AudioToScoreAligner::getLikelihood(int frame, int event)
         const Score::MusicalEventList& eventList = m_score.getMusicalEvents();
         double score = 0;
 
-        for (int bin = 0; bin < m_dataFeatures[frame].size(); bin++) {
+        for (int bin = 0; bin < int(m_dataFeatures[frame].size()); bin++) {
             score += m_dataFeatures[frame][bin]*log(eventList[event].eventTemplate[bin]);
         }
         m_likelihoods[frame][event].likelihood = exp(score);
@@ -203,4 +203,12 @@ Score AudioToScoreAligner::getScore() const
 AudioToScoreAligner::DataFeatures AudioToScoreAligner::getDataFeatures() const
 {
     return m_dataFeatures;
+}
+
+void AudioToScoreAligner::setAlignmentConstraints(int se, int ee, int sf, int ef)
+{
+    m_startEvent = se;
+    m_endEvent = ee;
+    m_startFrame = sf;
+    m_endFrame = ef;
 }

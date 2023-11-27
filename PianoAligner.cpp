@@ -422,21 +422,7 @@ PianoAligner::process(const float *const *inputBuffers, Vamp::RealTime timestamp
         }
     }
     m_aligner->supplyFeature(s);
-
-
-/*
-    if (m_frameCount >= 390 && m_frameCount <=403) {
-        std::cerr << "#Frame == " <<m_frameCount;
-        std::cerr << timestamp << '\n';
-        for (const auto& value: s) {
-            std::cerr << value << ',';
-        }
-        std::cerr << "end of Frame "<<m_frameCount << '\n'<<'\n';
-    }
-
     m_frameCount++;
-    // std::cout << "m_frameCount: " <<m_frameCount<< '\n';
-*/
 
     // Testing templates:
     /*
@@ -474,14 +460,57 @@ PianoAligner::getRemainingFeatures()
 */
 
     Score::MusicalEventList eventList = m_aligner->getScore().getMusicalEvents();
-    
-    // set alignment constraints through m_start/endEvent and m_start/endFrame
-    // TODO
+    // TODO: assert that eventList has at least one event
+    int startEvent = 0;
+    int endEvent = int(eventList.size()-1);
+    int startFrame = 0;
+    int endFrame = m_frameCount - 1;
+    // Set alignment constraints through m_start/endEvent and m_start/endFrame
+    int e = 0;
+    if (fabs(m_scorePositionStart - -1.) > .0000001) { // find the starting event
+        float distance = fabs(m_scorePositionStart - eventList[e].tick);
+        while ( (e+1) < int(eventList.size()) && fabs(m_scorePositionStart - eventList[e+1].tick) < distance) {
+            e++;
+            distance = fabs(m_scorePositionStart - eventList[e].tick);
+        }
+        startEvent = e;
+    }
+    if (fabs(m_scorePositionEnd - -1.) > .0000001) { // find the ending event
+        float distance = fabs(m_scorePositionEnd - eventList[e].tick);
+        while ( (e+1) < int(eventList.size()) && fabs(m_scorePositionEnd - eventList[e+1].tick) < distance) {
+            e++;
+            distance = fabs(m_scorePositionEnd - eventList[e].tick);
+        }
+        endEvent = e;
+    }
+    if (fabs(m_audioStart_sec - -1.) > .0000001) { // find the starting frame
+        Vamp::RealTime t = Vamp::RealTime::fromSeconds(m_audioStart_sec);
+        startFrame = Vamp::RealTime::realTime2Frame(t - m_firstFrameTime, m_inputSampleRate) / (128.*6.);
+        std::cerr<<"***Calculated starting frame is: "<<startFrame<<"; t="<<t<<std::endl;
+    }
 
+    if (fabs(m_audioEnd_sec - -1.) > .0000001) { // find the ending frame
+        Vamp::RealTime t = Vamp::RealTime::fromSeconds(m_audioEnd_sec);
+        endFrame = Vamp::RealTime::realTime2Frame(t - m_firstFrameTime, m_inputSampleRate) / (128.*6.);
+        std::cerr<<"***Calculated ending frame is: "<<endFrame<<"; t="<<t<<"; m_frameCount="<<m_frameCount<<std::endl;
+    }
+
+    Score::MeasureInfo info = eventList[startEvent].measureInfo;
+    std::string label = to_string(info.measureNumber);
+    label += "+" + to_string(info.measurePosition.numerator) + "/" + to_string(info.measurePosition.denominator);
+    std::cerr<<"***Start label is: "<<label<<std::endl;
+    info = eventList[endEvent].measureInfo;
+    label = to_string(info.measureNumber);
+    label += "+" + to_string(info.measurePosition.numerator) + "/" + to_string(info.measurePosition.denominator);
+    std::cerr<<"***End label is: "<<label<<std::endl;
+    std::cerr<<"***Start frame is: "<<startFrame<<"; start second = "<<m_audioStart_sec<<"; m_firstFrameTime = "<<m_firstFrameTime<<std::endl;
+    std::cerr<<"***End frame is: "<<endFrame<<"; end second = "<<m_audioEnd_sec<<std::endl;
+    m_aligner->setAlignmentConstraints(startEvent, endEvent, startFrame, endFrame);
 
     // Window version:
     vector<int> frames;
     AudioToScoreAligner::AlignmentResults alignmentResults = m_aligner->align();
+    // TODO: Need to change below:
     int event = 0;
     for (const auto& frame: alignmentResults) {
         Feature feature;
@@ -496,7 +525,7 @@ PianoAligner::getRemainingFeatures()
         std::cerr<<"***TICKS: "<<feature.label<<" -> "<<eventList[event].tick<<std::endl;
         feature.values.push_back(eventList[event].tick);
         featureSet[3].push_back(feature);
-        frames.push_back(frame);
+        frames.push_back(frame); // this feature not used?
         event++;
     }
 
