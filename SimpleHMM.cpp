@@ -32,12 +32,13 @@ SimpleHMM::SimpleHMM(AudioToScoreAligner& aligner) : m_aligner{aligner}
     m_nextStates[startingState][startingState] = p;
     m_prevStates[startingState][startingState] = p;
     State tail = startingState;
-    //std::cout << "tail:" << State::toString(*tail) << '\n';
-
+    // std::cerr << "tail:" << State::toString(tail) << '\n';
 
     // add micro states for each event
-    int eventIndex = 0;
-    for (auto& event : events) {
+    int startEvent = m_aligner.getStartEvent();
+    int endEvent = m_aligner.getEndEvent();
+    for (int eventIndex = startEvent; eventIndex <= endEvent; eventIndex++) {
+        auto &event = events[eventIndex];
         if (event.tempo == 0.0) {
             std::cerr << "In SimpleHMM: event.tempo is zero!!!" << '\n';
         }
@@ -63,7 +64,6 @@ SimpleHMM::SimpleHMM(AudioToScoreAligner& aligner) : m_aligner{aligner}
             tail = newState;
         }
         tailProb = 1 - p;
-        eventIndex++;
     }
 
     // add the ending state
@@ -78,13 +78,13 @@ SimpleHMM::SimpleHMM(AudioToScoreAligner& aligner) : m_aligner{aligner}
     /*
     State current = startingState;
     while (m_nextStates[startingState].size() > 0) {
-        std::cout << "event/microIndex= " << current.eventIndex <<"/"<< current.microIndex<< '\n';
+        std::cerr << "event/microIndex= " << current.eventIndex <<"/"<< current.microIndex<< '\n';
         for (auto& p : m_nextStates[current]) {
-            std::cout << State::toString(p.first) << "\t"<<p.second<< '\n';
+            std::cerr << State::toString(p.first) << "\t"<<p.second<< '\n';
         }
-        std::cout << "Prev:" << '\n';
+        std::cerr << "Prev:" << '\n';
         for (auto& p : m_prevStates[current]) {
-            std::cout << State::toString(p.first) << "\t"<<p.second<< '\n';
+            std::cerr << State::toString(p.first) << "\t"<<p.second<< '\n';
         }
         if (m_nextStates[current].size() < 2) break;
         for (auto& q: m_nextStates[current]) {
@@ -93,9 +93,9 @@ SimpleHMM::SimpleHMM(AudioToScoreAligner& aligner) : m_aligner{aligner}
                 break;
             }
         }
-
     }
-*/
+    */
+
 }
 
 SimpleHMM::~SimpleHMM()
@@ -117,7 +117,11 @@ const map<State, map<State, double>>& SimpleHMM::getPrevStates() const
 static void getForwardProbs(vector<vector<Hypothesis>>* forward,
     AudioToScoreAligner& aligner, const map<State, map<State, double>>& nextStates) {
 
-        int totalFrames = aligner.getDataFeatures().size();
+        int startFrame = aligner.getStartFrame();
+        int endFrame = aligner.getEndFrame();
+        int totalFrames = endFrame + 1 - startFrame;
+        std::cerr << "In getForwardProbs: totalFrames = " << totalFrames << '\n';
+        // TODO: Assert totalFrames is at least 1
         forward->reserve(totalFrames);
         vector<Hypothesis> hypotheses;
         // first frame:
@@ -133,7 +137,7 @@ static void getForwardProbs(vector<vector<Hypothesis>>* forward,
                     double trans = next.second;
                     int event = next.first.eventIndex;
                     double like;
-                    like = aligner.getLikelihood(frame, event);
+                    like = aligner.getLikelihood(startFrame + frame, event);
                     hypotheses.push_back(Hypothesis(next.first, prior*trans*like));
                 }
             }
@@ -162,12 +166,12 @@ static void getForwardProbs(vector<vector<Hypothesis>>* forward,
                 h.prob /= total;
             }
             forward->push_back(hypotheses);
-
+            /*
             std::cerr << "In getForwardProbs: frame = " << frame << '\n';
             for (auto& h : forward->at(frame)) {
-                std::cerr << "new prior = "<<Hypothesis::toString(h) << '\t'<<"likelihood = " << aligner.getLikelihood(frame, h.state.eventIndex) << '\n';
+                std::cerr << "new prior = "<<Hypothesis::toString(h) << '\t'<<"likelihood = " << aligner.getLikelihood(startFrame+frame, h.state.eventIndex) << '\n';
             }
-
+            */
         }
 }
 
@@ -175,8 +179,11 @@ static void getForwardProbs(vector<vector<Hypothesis>>* forward,
 
 static void getBackwardProbs(vector<vector<Hypothesis>>* backward,
     AudioToScoreAligner& aligner, const map<State, map<State, double>>& prevStates) {
-
-        int totalFrames = aligner.getDataFeatures().size();
+        int startFrame = aligner.getStartFrame();
+        int endFrame = aligner.getEndFrame();
+        int totalFrames = endFrame + 1 - startFrame;
+        std::cerr << "In getBackwardProbs: totalFrames = " << totalFrames << '\n';
+        // TODO: Assert totalFrames is at least 1
         backward->resize(totalFrames);
         vector<Hypothesis> hypotheses;
 
@@ -192,7 +199,7 @@ static void getBackwardProbs(vector<vector<Hypothesis>>* backward,
                 double prior = hypo.prob;
                 int event = hypo.state.eventIndex;
                 double like;
-                like = aligner.getLikelihood(frame + 1, event);
+                like = aligner.getLikelihood(startFrame + frame + 1, event);
 
                 for (const auto& prev : prevStates.at(hypo.state)) {
                     double trans = prev.second;
@@ -224,12 +231,13 @@ static void getBackwardProbs(vector<vector<Hypothesis>>* backward,
                 h.prob /= total;
             }
             backward->at(frame) = hypotheses;
-/*
-            std::cout << "Frame = " << frame << '\n';
+            /*
+            std::cerr << "In getBackwardProbs: startFrame + frame = " << startFrame + frame << '\n';
             for (auto& h : backward->at(frame)) {
-                std::cout << Hypothesis::toString(h) << '\n';
+                std::cerr << Hypothesis::toString(h) << '\n';
             }
-*/
+            */
+
         }
 }
 
@@ -248,11 +256,12 @@ AudioToScoreAligner::AlignmentResults SimpleHMM::getAlignmentResults()
     getBackwardProbs(backward, m_aligner, m_prevStates);
     vector<vector<Hypothesis>> post;
     vector<Hypothesis> hypotheses;
-    int totalFrames = m_aligner.getDataFeatures().size();
-    for (int frame = 0; frame < totalFrames; frame ++) {
+    int startFrame = m_aligner.getStartFrame();
+    int endFrame = m_aligner.getEndFrame();
+    for (int frame = startFrame; frame <= endFrame; frame ++) {
         hypotheses.clear();
-        for (const auto& hypo1 : forward->at(frame)) {
-            for (const auto& hypo2 : backward->at(frame)) {
+        for (const auto& hypo1 : forward->at(frame-startFrame)) {
+            for (const auto& hypo2 : backward->at(frame-startFrame)) {
                 if (hypo1.state == hypo2.state) {
                     hypotheses.push_back(Hypothesis(hypo1.state, hypo1.prob * hypo2.prob));
                     break;
@@ -263,35 +272,35 @@ AudioToScoreAligner::AlignmentResults SimpleHMM::getAlignmentResults()
     }
 
     // Print posterior hypotheses:
-
-    int frame = 0;
-    // std::cout << "Forward!!!" << '\n';
-     for (auto& p : post) { // *forward
-         std::sort(p.begin(), p.end(), std::greater<Hypothesis>());
-         //std::cerr << "### Frame = " << frame << '\n';
-         // std::cerr << "### real time = " <<Vamp::RealTime::frame2RealTime(frame*(128.*6.), 48000)<< '\n'; // m_firstFrameTime is 0 in SV
-         for (const auto& h : p) {
-             //std::cerr << Hypothesis::toString(h) << '\n';
-         }
-         frame++;
-     }
-
-
+    /*
+    int frame = startFrame;
+    std::cerr << "Forward!!!" << '\n';
+    for (auto& p : post) { // *forward
+        std::sort(p.begin(), p.end(), std::greater<Hypothesis>());
+        std::cerr << "### Frame = " << frame << '\n';
+        std::cerr << "### real time = " <<Vamp::RealTime::frame2RealTime(frame*(128.*6.), 48000)<< '\n'; // m_firstFrameTime is 0 in SV
+        for (const auto& h : p) {
+            std::cerr << Hypothesis::toString(h) << '\n';
+        }
+        frame++;
+    }
+    */
 
 
     // Window
     int windowSize = 3; // TODO: Check and make sure it's always an odd number.
     std::cout << "windowSize/2 = "<<windowSize/2 << '\n';
-    int numEvents = m_aligner.getScore().getMusicalEvents().size();
-    int startFrame = 0;
-    for (int event = 0; event < numEvents; event++) {
-        if (results.size() == 0)    startFrame = 0;
-        else startFrame = results[results.size()-1] - windowSize/2 + 1;
-        if (startFrame < 0) startFrame = 0;
+    int startEvent = m_aligner.getStartEvent();
+    int endEvent = m_aligner.getEndEvent();
+    int onsetFrame = 0;
+    for (int event = startEvent; event <= endEvent; event++) {
+        if (results.size() == 0)    onsetFrame = 0;
+        else onsetFrame = results[results.size()-1] - startFrame - windowSize/2 + 1;
+        if (onsetFrame < 0) onsetFrame = 0;
         double bestScore = 0.;
-        int bestStartFrame;
-        for (int frame = startFrame; frame + windowSize < post.size() + 1; frame++) {
-            // find the best startFrame for this event, and add frame to result:
+        int bestOnsetFrame;
+        for (int frame = onsetFrame; frame + windowSize < int(post.size()) + 1; frame++) {
+            // find the best onsetFrame for this event, and add frame to result:
             double score = 0.;
             for (int t = frame; t < frame + windowSize; t++) {
                 for (const auto& h: post[t]) {
@@ -302,20 +311,21 @@ AudioToScoreAligner::AlignmentResults SimpleHMM::getAlignmentResults()
             }
             if (score > bestScore) {
                 bestScore = score;
-                bestStartFrame = frame + windowSize/2;
+                bestOnsetFrame = frame + windowSize/2;
             }
         }
-        results.push_back(bestStartFrame);
-        std::cerr << "Event="<<event<<", bestStartFrame = " << bestStartFrame << '\n';
+        results.push_back(startFrame + bestOnsetFrame);
+        std::cerr << "Event="<<event<<", onsetFrame = " << startFrame + bestOnsetFrame << '\n';
     }
 
     return results;
 
 
 
-// Return the the event with maximum posterior prob for each frame.
+    // Old: Return the the event with maximum posterior prob for each frame.
+    /*
     frame = 0;
-    for (const auto& l : post) {//*forward
+    for (const auto& l : post) { //forward
         map<int, double> merged;
         for (const auto& h : l) {
             if (merged.find(h.state.eventIndex) == merged.end()) {
@@ -338,4 +348,5 @@ AudioToScoreAligner::AlignmentResults SimpleHMM::getAlignmentResults()
         // results.push_back(record);
     }
     return results;
+    */
 }

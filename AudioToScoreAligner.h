@@ -49,6 +49,10 @@ public:
     DataFeatures getDataFeatures() const;
     double getLikelihood(int frameIndex, int eventIndex);
     void setAlignmentConstraints(int se, int ee, int sf, int ef);
+    int getStartEvent() const;
+    int getEndEvent() const;
+    int getStartFrame() const;
+    int getEndFrame() const;
 
 private:
     float m_inputSampleRate;

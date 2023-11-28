@@ -510,8 +510,7 @@ PianoAligner::getRemainingFeatures()
     // Window version:
     vector<int> frames;
     AudioToScoreAligner::AlignmentResults alignmentResults = m_aligner->align();
-    // TODO: Need to change below:
-    int event = 0;
+    int event = startEvent;
     for (const auto& frame: alignmentResults) {
         Feature feature;
         feature.hasTimestamp = true;

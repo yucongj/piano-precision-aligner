@@ -212,3 +212,23 @@ void AudioToScoreAligner::setAlignmentConstraints(int se, int ee, int sf, int ef
     m_startFrame = sf;
     m_endFrame = ef;
 }
+
+int AudioToScoreAligner::getStartEvent() const
+{
+    return m_startEvent;
+}
+
+int AudioToScoreAligner::getEndEvent() const
+{
+    return m_endEvent;
+}
+
+int AudioToScoreAligner::getStartFrame() const
+{
+    return m_startFrame;
+}
+
+int AudioToScoreAligner::getEndFrame() const
+{
+    return m_endFrame;
+}
