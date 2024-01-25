@@ -70,13 +70,17 @@ bool Score::initialize(string scoreFilePath)
         getline(iss, s, '\t');
         int velocity = stoi(s);
 
+        // noteId
+        string noteId;
+        getline(iss, noteId, '\t');
+
 
         if (m != currentMeasure) { // new event
 
             if (currentMeasure != "") { // skip the beginning measure
                 // Add continuing notes, if any, from the last event.
                 for (Note note: continuingNotes)
-                    currentEvent.notes.push_back(Note(false, note.midiNumber));
+                    currentEvent.notes.push_back(Note(false, note.midiNumber, noteId));
                 currentEvent.duration = measureFraction - currentEvent.measureInfo.measureFraction;
                 m_musicalEvents.push_back(currentEvent);
                 continuingNotes = currentEvent.notes;
@@ -97,7 +101,7 @@ bool Score::initialize(string scoreFilePath)
                 }
             }
         } else // If it's an in note, add it to the currentEvent.
-            currentEvent.notes.push_back(Note(true, midi));
+            currentEvent.notes.push_back(Note(true, midi, noteId));
     }
 
     return true;
@@ -163,10 +167,12 @@ bool Score::readTempo(string tempoFilePath)
                 event.tempo = last.newTempo * last.noteLength;
     }
     // testing:
+    /*
     for (auto &event: m_musicalEvents) {
         cerr<<"***TEMPO: "<<event.measureInfo.measureNumber<<"+"
                  <<event.measureInfo.measurePosition<<" -> "<<event.tempo<<endl;
     }
+    */
 
     return true;
 }
@@ -229,11 +235,13 @@ bool Score::readMeter(string meterFilePath)
             event.meterDenom = last.denom;
         }
     // testing:
+    /*
     for (auto &event: m_musicalEvents) {
         cerr<<"***METER: "<<event.measureInfo.measureNumber<<"+"
                  <<event.measureInfo.measurePosition<<" -> "<<
                  event.meterNumer<<"/"<<event.meterDenom<<endl;
     }
+    */
 
     return true;
 }

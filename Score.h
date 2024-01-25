@@ -123,8 +123,9 @@ public:
     {
         bool isNewNote; // is an emerging note as opposed to a continuing note
         int midiNumber;
+        string noteId; // from MEI
 
-        Note(bool nn, int mn) : isNewNote{nn}, midiNumber{mn} { }
+        Note(bool nn, int mn, string ni) : isNewNote{nn}, midiNumber{mn}, noteId{ni} { }
     };
 
     struct MusicalEvent
