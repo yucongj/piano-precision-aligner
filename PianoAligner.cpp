@@ -7,7 +7,7 @@
 
 #include "Templates.h"
 #include "Paths.h"
-#include "Score.h" // delete later
+#include "Score.h" // delete later?
 #include <cmath> // delete later
 #include <filesystem>
 
@@ -18,6 +18,10 @@ PianoAligner::PianoAligner(float inputSampleRate) :
     m_blockSize(0),
     m_scorePositionStart(-1.f),
     m_scorePositionEnd(-1.f),
+    m_scorePositionStart_nominator(-1.f),
+    m_scorePositionStart_denominator(-1.f),
+    m_scorePositionEnd_nominator(-1.f),
+    m_scorePositionEnd_denominator(-1.f),
     m_audioStart_sec(-1.f),
     m_audioEnd_sec(-1.f),
     m_isFirstFrame(true),
@@ -46,7 +50,7 @@ string
 PianoAligner::getDescription() const
 {
     // Return something helpful here!
-    return "A dummy plugin created by YJ.";
+    return "An audio-to-score alignment plugin created by YJ.";
 }
 
 string
@@ -146,6 +150,46 @@ PianoAligner::getParameterDescriptors() const
     d.isQuantized = false;
     list.push_back(d);
 
+    d.identifier = "score-position-start-nominator";
+    d.name = "Score Position - Start - Nominator";
+    d.description = "";
+    d.unit = "";
+    d.minValue = -1.f;
+    d.maxValue = 100000.f;
+    d.defaultValue = -1.f;
+    d.isQuantized = false;
+    list.push_back(d);
+
+    d.identifier = "score-position-start-denominator";
+    d.name = "Score Position - Start - Denominator";
+    d.description = "";
+    d.unit = "";
+    d.minValue = -1.f;
+    d.maxValue = 100000.f;
+    d.defaultValue = -1.f;
+    d.isQuantized = false;
+    list.push_back(d);
+
+    d.identifier = "score-position-end-nominator";
+    d.name = "Score Position - End - Nominator";
+    d.description = "";
+    d.unit = "";
+    d.minValue = -1.f;
+    d.maxValue = 100000.f;
+    d.defaultValue = -1.f;
+    d.isQuantized = false;
+    list.push_back(d);
+
+    d.identifier = "score-position-end-denominator";
+    d.name = "Score Position - End - Denominator";
+    d.description = "";
+    d.unit = "";
+    d.minValue = -1.f;
+    d.maxValue = 100000.f;
+    d.defaultValue = -1.f;
+    d.isQuantized = false;
+    list.push_back(d);
+
     d.identifier = "audio-start";
     d.name = "Audio - Start";
     d.description = "";
@@ -176,6 +220,14 @@ PianoAligner::getParameter(string identifier) const
         return m_scorePositionStart;
     } else if (identifier == "score-position-end") {
         return m_scorePositionEnd;
+    } else if (identifier == "score-position-start-nominator") {
+        return m_scorePositionStart_nominator;
+    } else if (identifier == "score-position-start-denominator") {
+        return m_scorePositionStart_denominator;
+    } else if (identifier == "score-position-end-nominator") {
+        return m_scorePositionEnd_nominator;
+    } else if (identifier == "score-position-end-denominator") {
+        return m_scorePositionEnd_denominator;
     } else if (identifier == "audio-start") {
         return m_audioStart_sec;
     } else if (identifier == "audio-end") {
@@ -191,6 +243,14 @@ PianoAligner::setParameter(string identifier, float value)
         m_scorePositionStart = value;
     } else if (identifier == "score-position-end") {
         m_scorePositionEnd = value;
+    } else if (identifier == "score-position-start-nominator") {
+        m_scorePositionStart_nominator = value;
+    } else if (identifier == "score-position-start-denominator") {
+        m_scorePositionStart_denominator = value;
+    } else if (identifier == "score-position-end-nominator") {
+        m_scorePositionEnd_nominator = value;
+    } else if (identifier == "score-position-end-denominator") {
+        m_scorePositionEnd_denominator = value;
     } else if (identifier == "audio-start") {
         m_audioStart_sec = value;
     } else if (identifier == "audio-end") {
@@ -467,6 +527,7 @@ PianoAligner::getRemainingFeatures()
     int endFrame = m_frameCount - 1;
     // Set alignment constraints through m_start/endEvent and m_start/endFrame
     int e = 0;
+    /*
     if (fabs(m_scorePositionStart - -1.) > .0000001) { // find the starting event
         float distance = fabs(m_scorePositionStart - eventList[e].tick);
         while ( (e+1) < int(eventList.size()) && fabs(m_scorePositionStart - eventList[e+1].tick) < distance) {
@@ -483,6 +544,27 @@ PianoAligner::getRemainingFeatures()
         }
         endEvent = e;
     }
+    */
+
+    if (fabs(m_scorePositionStart_nominator - -1.) > .0000001) { // find the starting event
+        Fraction target = Fraction(m_scorePositionStart_nominator, m_scorePositionStart_denominator);
+        float distance = fabs((target - eventList[e].measureInfo.measureFraction).getValue());
+        while ( (e+1) < int(eventList.size()) && fabs((target - eventList[e+1].measureInfo.measureFraction).getValue()) < distance) {
+            e++;
+            distance = fabs((target - eventList[e].measureInfo.measureFraction).getValue());
+        }
+        startEvent = e;
+    }
+    if (fabs(m_scorePositionEnd_nominator - -1.) > .0000001) { // find the ending event
+        Fraction target = Fraction(m_scorePositionEnd_nominator, m_scorePositionEnd_denominator);
+        float distance = fabs((target - eventList[e].measureInfo.measureFraction).getValue());
+        while ( (e+1) < int(eventList.size()) && fabs((target - eventList[e+1].measureInfo.measureFraction).getValue()) < distance) {
+            e++;
+            distance = fabs((target - eventList[e].measureInfo.measureFraction).getValue());
+        }
+        endEvent = e;
+    }
+
     if (fabs(m_audioStart_sec - -1.) > .0000001) { // find the starting frame
         Vamp::RealTime t = Vamp::RealTime::fromSeconds(m_audioStart_sec);
         startFrame = Vamp::RealTime::realTime2Frame(t - m_firstFrameTime, m_inputSampleRate) / (128.*6.);

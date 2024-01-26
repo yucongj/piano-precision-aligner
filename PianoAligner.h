@@ -60,6 +60,10 @@ protected:
     // indicates no constraint of that type. The defaults are all -1.
     float m_scorePositionStart;
     float m_scorePositionEnd;
+    float m_scorePositionStart_nominator;
+    float m_scorePositionStart_denominator;
+    float m_scorePositionEnd_nominator;
+    float m_scorePositionEnd_denominator;
     float m_audioStart_sec;
     float m_audioEnd_sec;
     
