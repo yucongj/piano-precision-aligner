@@ -18,9 +18,9 @@ PianoAligner::PianoAligner(float inputSampleRate) :
     m_blockSize(0),
     m_scorePositionStart(-1.f),
     m_scorePositionEnd(-1.f),
-    m_scorePositionStart_nominator(-1.f),
+    m_scorePositionStart_numerator(-1.f),
     m_scorePositionStart_denominator(-1.f),
-    m_scorePositionEnd_nominator(-1.f),
+    m_scorePositionEnd_numerator(-1.f),
     m_scorePositionEnd_denominator(-1.f),
     m_audioStart_sec(-1.f),
     m_audioEnd_sec(-1.f),
@@ -150,8 +150,8 @@ PianoAligner::getParameterDescriptors() const
     d.isQuantized = false;
     list.push_back(d);
 
-    d.identifier = "score-position-start-nominator";
-    d.name = "Score Position - Start - Nominator";
+    d.identifier = "score-position-start-numerator";
+    d.name = "Score Position - Start - Numerator";
     d.description = "";
     d.unit = "";
     d.minValue = -1.f;
@@ -170,8 +170,8 @@ PianoAligner::getParameterDescriptors() const
     d.isQuantized = false;
     list.push_back(d);
 
-    d.identifier = "score-position-end-nominator";
-    d.name = "Score Position - End - Nominator";
+    d.identifier = "score-position-end-numerator";
+    d.name = "Score Position - End - numerator";
     d.description = "";
     d.unit = "";
     d.minValue = -1.f;
@@ -220,12 +220,12 @@ PianoAligner::getParameter(string identifier) const
         return m_scorePositionStart;
     } else if (identifier == "score-position-end") {
         return m_scorePositionEnd;
-    } else if (identifier == "score-position-start-nominator") {
-        return m_scorePositionStart_nominator;
+    } else if (identifier == "score-position-start-numerator") {
+        return m_scorePositionStart_numerator;
     } else if (identifier == "score-position-start-denominator") {
         return m_scorePositionStart_denominator;
-    } else if (identifier == "score-position-end-nominator") {
-        return m_scorePositionEnd_nominator;
+    } else if (identifier == "score-position-end-numerator") {
+        return m_scorePositionEnd_numerator;
     } else if (identifier == "score-position-end-denominator") {
         return m_scorePositionEnd_denominator;
     } else if (identifier == "audio-start") {
@@ -243,12 +243,12 @@ PianoAligner::setParameter(string identifier, float value)
         m_scorePositionStart = value;
     } else if (identifier == "score-position-end") {
         m_scorePositionEnd = value;
-    } else if (identifier == "score-position-start-nominator") {
-        m_scorePositionStart_nominator = value;
+    } else if (identifier == "score-position-start-numerator") {
+        m_scorePositionStart_numerator = value;
     } else if (identifier == "score-position-start-denominator") {
         m_scorePositionStart_denominator = value;
-    } else if (identifier == "score-position-end-nominator") {
-        m_scorePositionEnd_nominator = value;
+    } else if (identifier == "score-position-end-numerator") {
+        m_scorePositionEnd_numerator = value;
     } else if (identifier == "score-position-end-denominator") {
         m_scorePositionEnd_denominator = value;
     } else if (identifier == "audio-start") {
@@ -546,8 +546,8 @@ PianoAligner::getRemainingFeatures()
     }
     */
 
-    if (fabs(m_scorePositionStart_nominator - -1.) > .0000001) { // find the starting event
-        Fraction target = Fraction(m_scorePositionStart_nominator, m_scorePositionStart_denominator);
+    if (fabs(m_scorePositionStart_numerator - -1.) > .0000001) { // find the starting event
+        Fraction target = Fraction(m_scorePositionStart_numerator, m_scorePositionStart_denominator);
         float distance = fabs((target - eventList[e].measureInfo.measureFraction).getValue());
         while ( (e+1) < int(eventList.size()) && fabs((target - eventList[e+1].measureInfo.measureFraction).getValue()) < distance) {
             e++;
@@ -555,8 +555,8 @@ PianoAligner::getRemainingFeatures()
         }
         startEvent = e;
     }
-    if (fabs(m_scorePositionEnd_nominator - -1.) > .0000001) { // find the ending event
-        Fraction target = Fraction(m_scorePositionEnd_nominator, m_scorePositionEnd_denominator);
+    if (fabs(m_scorePositionEnd_numerator - -1.) > .0000001) { // find the ending event
+        Fraction target = Fraction(m_scorePositionEnd_numerator, m_scorePositionEnd_denominator);
         float distance = fabs((target - eventList[e].measureInfo.measureFraction).getValue());
         while ( (e+1) < int(eventList.size()) && fabs((target - eventList[e+1].measureInfo.measureFraction).getValue()) < distance) {
             e++;
