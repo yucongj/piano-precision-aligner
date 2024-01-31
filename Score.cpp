@@ -277,7 +277,7 @@ void Score::calculateTicks()
     }
 }
 
-ostream& operator<<(ostream &strm, Fraction &f) {
+ostream& operator<<(ostream &strm, const Fraction &f) {
    return strm << to_string(f.numerator) << "/" << to_string(f.denominator);
 }
 

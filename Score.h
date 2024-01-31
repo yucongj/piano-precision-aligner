@@ -77,7 +77,7 @@ struct Fraction // Simplest form using GCD.
     }
 };
 
-std::ostream& operator<<(std::ostream &strm, Fraction &f);
+std::ostream& operator<<(std::ostream &strm, const Fraction &f);
 
 class Score
 {
