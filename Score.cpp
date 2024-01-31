@@ -9,10 +9,6 @@
 #include <string>
 
 
-
-
-
-
 using namespace std;
 
 Score::Score()
@@ -273,15 +269,15 @@ void Score::calculateTicks()
                 lastChangeTick = currentTick;
             }
         }
-        //std::string label = to_string(info.measureNumber);
+        //string label = to_string(info.measureNumber);
         //label += "+" + to_string(info.measurePosition.numerator) + "/" + to_string(info.measurePosition.denominator);
-        //std::cerr<<"***Score ticks: "<<label<<" -> "<<currentTick<<std::endl;
+        //cerr<<"***Score ticks: "<<label<<" -> "<<currentTick<<endl;
         // feature.values.push_back(info.measureFraction.numerator * 2000 / info.measureFraction.denominator);
         m_musicalEvents[event].tick = currentTick;
     }
 }
 
-std::ostream& operator<<(std::ostream &strm, Fraction &f) {
+ostream& operator<<(ostream &strm, Fraction &f) {
    return strm << to_string(f.numerator) << "/" << to_string(f.denominator);
 }
 
@@ -294,7 +290,7 @@ void Score::setEventTemplates(NoteTemplates& t)
 {
     int bins = t[60].size();
     if (bins <= 0) {
-        std::cerr << "setEventTemplates: Something is wrong with the note templates." << '\n';
+        cerr << "setEventTemplates: Something is wrong with the note templates." << '\n';
         return;
     }
     double smallValue = 1 / (double)bins;
@@ -338,7 +334,7 @@ int main()
         // Testing code:
         for (Score::MusicalEvent event: events) {
             cout<<"***MEASURE: "<<event.measureInfo.measureFraction<<endl;
-            std::cout << "duration: " << event.duration << '\n';
+            cout << "duration: " << event.duration << '\n';
             for (Score::Note note: event.notes) {
                 cout<<note.isNewNote<<"\t"<<note.midiNumber<<endl;
             }
