@@ -110,6 +110,12 @@ public:
         bool operator>=(const MeasureInfo& other) const { // ignore measureFraction
             return (*this == other) || (other < *this);
         }
+
+        std::string toLabel() const {
+            return std::to_string(measureNumber) + "+"
+                + std::to_string(measurePosition.numerator) + "/"
+                + std::to_string(measurePosition.denominator);
+        }
     };
 
     struct Note

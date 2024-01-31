@@ -579,12 +579,10 @@ PianoAligner::getRemainingFeatures()
     }
 
     Score::MeasureInfo info = eventList[startEvent].measureInfo;
-    string label = to_string(info.measureNumber);
-    label += "+" + to_string(info.measurePosition.numerator) + "/" + to_string(info.measurePosition.denominator);
+    string label = info.toLabel();
     cerr<<"***Start label is: "<<label<<endl;
     info = eventList[endEvent].measureInfo;
-    label = to_string(info.measureNumber);
-    label += "+" + to_string(info.measurePosition.numerator) + "/" + to_string(info.measurePosition.denominator);
+    label = info.toLabel();
     cerr<<"***End label is: "<<label<<endl;
     cerr<<"***Start frame is: "<<startFrame<<"; start second = "<<m_audioStart_sec<<"; m_firstFrameTime = "<<m_firstFrameTime<<endl;
     cerr<<"***End frame is: "<<endFrame<<"; end second = "<<m_audioEnd_sec<<endl;
@@ -601,9 +599,7 @@ PianoAligner::getRemainingFeatures()
         cerr <<"event="<<event<< ", real time = "<<feature.timestamp << '\n';
         Score::MeasureInfo info = eventList[event].measureInfo;
         // Calculate label:
-        feature.label = to_string(info.measureNumber);
-        feature.label += "+" + to_string(info.measurePosition.numerator) + "/" + to_string(info.measurePosition.denominator);
-        
+        feature.label = info.toLabel();
         cerr<<"***TICKS: "<<feature.label<<" -> "<<eventList[event].tick<<endl;
         feature.values.push_back(eventList[event].tick);
         featureSet[3].push_back(feature);
