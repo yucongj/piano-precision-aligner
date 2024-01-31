@@ -14,13 +14,6 @@
 #include "Templates.h"
 
 
-using std::istringstream;
-using std::vector;
-using std::stoi;
-using std::string;
-using std::to_string;
-
-
 struct Fraction // Simplest form using GCD.
 {
     int numerator;
@@ -41,9 +34,9 @@ struct Fraction // Simplest form using GCD.
         }
     }
 
-    static Fraction fromString(const string &s) {
-        string n, d;
-        istringstream iss(s);
+    static Fraction fromString(const std::string &s) {
+        std::string n, d;
+        std::istringstream iss(s);
         getline(iss, n, '/');
         getline(iss, d, '/');
         return Fraction(stoi(n), stoi(d));
@@ -123,15 +116,15 @@ public:
     {
         bool isNewNote; // is an emerging note as opposed to a continuing note
         int midiNumber;
-        string noteId; // from MEI
+        std::string noteId; // from MEI
 
-        Note(bool nn, int mn, string ni) : isNewNote{nn}, midiNumber{mn}, noteId{ni} { }
+        Note(bool nn, int mn, std::string ni) : isNewNote{nn}, midiNumber{mn}, noteId{ni} { }
     };
 
     struct MusicalEvent
     {
         MeasureInfo measureInfo;
-        vector<Note> notes;
+        std::vector<Note> notes;
         Template eventTemplate;
         Fraction duration;
         float tempo; // e.g., Quarter note = 120.0
@@ -162,13 +155,13 @@ public:
         MeterChange(int mn, int n, int d): measureNumber{mn}, numer{n}, denom{d} { }
     };
 
-    typedef vector<MusicalEvent> MusicalEventList;
-    typedef vector<TempoChange> TempoChangeList;
-    typedef vector<MeterChange> MeterChangeList;
+    typedef std::vector<MusicalEvent> MusicalEventList;
+    typedef std::vector<TempoChange> TempoChangeList;
+    typedef std::vector<MeterChange> MeterChangeList;
 
-    bool initialize(string scoreFilePath);
-    bool readTempo(string tempoFilePath);
-    bool readMeter(string meterFilePath);
+    bool initialize(std::string scoreFilePath);
+    bool readTempo(std::string tempoFilePath);
+    bool readMeter(std::string meterFilePath);
     void calculateTicks();
 
     const MusicalEventList& getMusicalEvents() const;

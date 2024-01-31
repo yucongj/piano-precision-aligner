@@ -11,9 +11,6 @@
 
 #include <vector>
 
-using std::vector;
-
-
 
 class AudioToScoreAligner
 {
@@ -33,14 +30,14 @@ public:
         bool calculated;
         Likelihood(double l, bool c) : likelihood{l}, calculated{c} { }
     };
-    typedef vector<vector<Likelihood>> DataLikelihoods;
-    typedef vector<float> DataSpectrum;
-    typedef vector<DataSpectrum> DataFeatures;
+    typedef std::vector<std::vector<Likelihood>> DataLikelihoods;
+    typedef std::vector<float> DataSpectrum;
+    typedef std::vector<DataSpectrum> DataFeatures;
 
     //typedef std::vector<Vamp::RealTime> AlignmentResults;
-    typedef vector<int> AlignmentResults;
+    typedef std::vector<int> AlignmentResults;
 
-    bool loadAScore(string scoreName, int blockSize);
+    bool loadAScore(std::string scoreName, int blockSize);
     void supplyFeature(DataSpectrum s);
     AlignmentResults align();
     float getSampleRate() const;

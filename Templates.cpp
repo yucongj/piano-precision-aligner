@@ -9,7 +9,7 @@
 #include <map>
 #include <vector>
 
-
+using namespace std;
 
 static const int LOW_MIDI = 21;
 static const int HIGH_MIDI = 108;
@@ -58,7 +58,7 @@ static void initializeNoteTemplates(float sr, int blockSize, NoteTemplates& t) {
                 float x = (k-bin)/sigma;
                 t[midi][k] += exp(-k*0.01)*peakFunction(x) / sigma; // 0.01//0.1
                 //if (peakFunction(x) == 0) {
-                    //std::cerr << "!!!!peakFunction returns 0: midi=" << midi <<"bin="<<bin<<"k="<<k<< '\n';
+                    //cerr << "!!!!peakFunction returns 0: midi=" << midi <<"bin="<<bin<<"k="<<k<< '\n';
                 //}
             }
             h++;
@@ -70,7 +70,7 @@ static void initializeNoteTemplates(float sr, int blockSize, NoteTemplates& t) {
             total += value;
         }
         if (total == 0.) {
-            std::cerr << "In initializeNoteTemplates: total is 0 for midi "<< midi << '\n'; // midi 108 exceeds 4k Hz.
+            cerr << "In initializeNoteTemplates: total is 0 for midi "<< midi << '\n'; // midi 108 exceeds 4k Hz.
         } else {
             for (auto &value: t[midi]) {
                 value /= total;

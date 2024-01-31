@@ -12,6 +12,7 @@
 #include <filesystem>
 #include <vector>
 
+using namespace std;
 
 AudioToScoreAligner::AudioToScoreAligner(float inputSampleRate, int hopSize,
 int startEvent, int endEvent, int startFrame, int endFrame) :
@@ -26,21 +27,21 @@ AudioToScoreAligner::~AudioToScoreAligner()
 
 bool AudioToScoreAligner::loadAScore(string scoreName, int blockSize)
 {
-    std::cerr << "In loadAScore: scoreName is -> " << scoreName << '\n';
+    cerr << "In loadAScore: scoreName is -> " << scoreName << '\n';
 
     auto scores = Paths::getScores();
 
     if (scores.find(scoreName) == scores.end()) {
-        std::cerr << "Score not found: " << scoreName << '\n';
+        cerr << "Score not found: " << scoreName << '\n';
         return false;
     }
 
-    std::filesystem::path targetPath = scores[scoreName];
+    filesystem::path targetPath = scores[scoreName];
 
     // Paths::getScores() has already verified that these exist
-    std::string scorePath = targetPath.string() + "/" + scoreName + ".solo";
-    std::string scoreTempoPath = targetPath.string() + "/" + scoreName + ".tempo";
-    std::string scoreMeterPath = targetPath.string() + "/" + scoreName + ".meter";
+    string scorePath = targetPath.string() + "/" + scoreName + ".solo";
+    string scoreTempoPath = targetPath.string() + "/" + scoreName + ".tempo";
+    string scoreMeterPath = targetPath.string() + "/" + scoreName + ".meter";
 
     bool success = m_score.initialize(scorePath);
     if (success)    success = m_score.readTempo(scoreTempoPath);
@@ -64,10 +65,10 @@ void AudioToScoreAligner::initializeLikelihoods()
     int frames = m_dataFeatures.size();
     int events = m_score.getMusicalEvents().size();
     if (frames == 0) {
-        std::cerr << "AudioToScoreAligner::initializeLikelihoods:\
+        cerr << "AudioToScoreAligner::initializeLikelihoods:\
         features are not supplied." << '\n';
     }
-    std::cerr << "AudioToScoreAligner::initializeLikelihoods:\
+    cerr << "AudioToScoreAligner::initializeLikelihoods:\
     features are indeed supplied. Number of frames = " << frames << '\n';
     for (int frame = 0; frame < frames; frame++) {
         vector<Likelihood> l;
@@ -90,7 +91,7 @@ void AudioToScoreAligner::initializeLikelihoods()
 double AudioToScoreAligner::getLikelihood(int frame, int event)
 {
     if (m_dataFeatures.size() == 0) {
-        std::cerr << "AudioToScoreAligner::getLikelihood:\
+        cerr << "AudioToScoreAligner::getLikelihood:\
         features are not supplied." << '\n';
     }
     static Template silenceTemplate;
@@ -114,30 +115,30 @@ double AudioToScoreAligner::getLikelihood(int frame, int event)
     // TODO: check the range for frame and event
     // If event < 0, use a different template:
     if (event < 0) {
-        if(!m_silenceLikelihoods[frame][std::abs(event)-1].calculated) {
+        if(!m_silenceLikelihoods[frame][abs(event)-1].calculated) {
             double score = 0;
             for (int bin = 0; bin < int(m_dataFeatures[frame].size()); bin++) {
                 score += m_dataFeatures[frame][bin]*log(silenceTemplate[bin]);
                 /*
                 if (frame == 2 && event == -1) {
                     if (isnan(score)) {
-                        std::cout << "bin="<<bin<<", score="<<score << '\n';
-                        std::cout << "bin value: "<<m_dataFeatures[frame][bin] << '\n';
-                        std::cout << "template value: "<<silenceTemplate[bin] << '\n';
+                        cout << "bin="<<bin<<", score="<<score << '\n';
+                        cout << "bin value: "<<m_dataFeatures[frame][bin] << '\n';
+                        cout << "template value: "<<silenceTemplate[bin] << '\n';
                     }
                 }
                 */
             }
-            m_silenceLikelihoods[frame][std::abs(event)-1].likelihood = exp(score);
-            m_silenceLikelihoods[frame][std::abs(event)-1].calculated = true;
+            m_silenceLikelihoods[frame][abs(event)-1].likelihood = exp(score);
+            m_silenceLikelihoods[frame][abs(event)-1].calculated = true;
             /*
-            if (isnan(m_silenceLikelihoods[frame][std::abs(event)-1].likelihood)) {
-                std::cerr << "Frame="<<frame << ", event="<<event<<'\n';
-                std::cerr << "like="<<m_silenceLikelihoods[frame][std::abs(event)-1].likelihood << '\n';
+            if (isnan(m_silenceLikelihoods[frame][abs(event)-1].likelihood)) {
+                cerr << "Frame="<<frame << ", event="<<event<<'\n';
+                cerr << "like="<<m_silenceLikelihoods[frame][abs(event)-1].likelihood << '\n';
             }
             */
         }
-        return m_silenceLikelihoods[frame][std::abs(event)-1].likelihood;
+        return m_silenceLikelihoods[frame][abs(event)-1].likelihood;
     }
 
     if (!m_likelihoods[frame][event].calculated) {
