@@ -11,8 +11,6 @@
 #include <map>
 #include <sstream> // for printing probs with high precision
 
-using std::vector;
-
 
 class SimpleHMM
 {
@@ -51,8 +49,8 @@ public:
             return !( (*this < other) || (*this == other) );
         }
 
-        static string toString(const State& s) {
-            string ss = to_string(s.eventIndex) + "\t" + to_string(s.microIndex);
+        static std::string toString(const State& s) {
+            std::string ss = std::to_string(s.eventIndex) + "\t" + std::to_string(s.microIndex);
             /*
             for (auto& p : s.nextStates) {
                 ss += "\t next: " + to_string(p.first->eventIndex) +
@@ -99,7 +97,7 @@ public:
             return !( (*this < other) || (*this == other) );
         }
 
-        static string toString(const Hypothesis& h) {
+        static std::string toString(const Hypothesis& h) {
             std::ostringstream out;
             out.precision(38);
             out << std::fixed << h.prob;
@@ -110,12 +108,12 @@ public:
     };
 
     AudioToScoreAligner::AlignmentResults getAlignmentResults();
-    const map<State, map<State, double>>& getNextStates() const;
+    const std::map<State, std::map<State, double>>& getNextStates() const;
 
 private:
     AudioToScoreAligner m_aligner;
-    map<State, map<State, double>> m_nextStates; // value is <next state, trans prob>
-    map<State, map<State, double>> m_prevStates; // value is <prev state, trans prob>
+    std::map<State, std::map<State, double>> m_nextStates; // value is <next state, trans prob>
+    std::map<State, std::map<State, double>> m_prevStates; // value is <prev state, trans prob>
 };
 
 #endif

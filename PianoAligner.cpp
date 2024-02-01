@@ -11,6 +11,7 @@
 #include <cmath> // delete later
 #include <filesystem>
 
+using namespace std;
 
 PianoAligner::PianoAligner(float inputSampleRate) :
     Plugin(inputSampleRate),
@@ -265,10 +266,10 @@ PianoAligner::getPrograms() const
 
     auto scores = Paths::getScores();
 
-    std::cerr << "PianoAligner::getPrograms: have " << scores.size() << " scores" << std::endl;
+    cerr << "PianoAligner::getPrograms: have " << scores.size() << " scores" << endl;
 
     for (auto score : scores) {
-        std::cerr << "PianoAligner::getPrograms: score " << score.first << std::endl;
+        cerr << "PianoAligner::getPrograms: score " << score.first << endl;
         list.push_back(score.first);
     }
 
@@ -288,7 +289,7 @@ void
 PianoAligner::selectProgram(string name)
 {
     m_scoreName = name;
-    std::cerr << "In selectProgram: name is -> " << name << '\n'; // ???
+    cerr << "In selectProgram: name is -> " << name << '\n'; // ???
 }
 
 PianoAligner::OutputList
@@ -320,8 +321,8 @@ PianoAligner::getOutputDescriptors() const
     d.hasFixedBinCount = true;
     /*
     if (m_blockSize == 0) {
-        //std::cerr << "m_blockSize is 0 in getOutputDescriptors()." << '\n';
-        std::cerr << "Sample Rate is " << m_inputSampleRate<<'\n';
+        //cerr << "m_blockSize is 0 in getOutputDescriptors()." << '\n';
+        cerr << "Sample Rate is " << m_inputSampleRate<<'\n';
         d.binCount = (512*6)/2 + 1;
     } else {
         d.binCount = m_blockSize/2 + 1;
@@ -405,10 +406,10 @@ PianoAligner::initialise(size_t channels, size_t stepSize, size_t blockSize)
 
     m_isFirstFrame = true;
 
-    std::cerr << "PianoAligner::initialise: score position start = "
+    cerr << "PianoAligner::initialise: score position start = "
               << m_scorePositionStart << ", end = " << m_scorePositionEnd
               << ", audio start = " << m_audioStart_sec << ", end = "
-              << m_audioEnd_sec << std::endl;
+              << m_audioEnd_sec << endl;
     
     // Real initialisation work goes here!
 
@@ -424,13 +425,13 @@ PianoAligner::initialise(size_t channels, size_t stepSize, size_t blockSize)
         if (getenv("PIANO_ALIGNER_USE_DEFAULT_SCORE") != nullptr) {
             auto programs = getPrograms();
             if (programs.empty()) {
-                std::cerr << "PianoAligner::initialise: No scores available" << std::endl;
+                cerr << "PianoAligner::initialise: No scores available" << endl;
                 return false;
             } else {
                 m_scoreName = programs[0];
             }
         } else {
-            std::cerr << "PianoAligner::initialise: No score selected" << std::endl;
+            cerr << "PianoAligner::initialise: No score selected" << endl;
             return false;
         }
     }
@@ -438,8 +439,8 @@ PianoAligner::initialise(size_t channels, size_t stepSize, size_t blockSize)
     if (m_aligner->loadAScore(m_scoreName, blockSize)) {
 	    return true;
     } else {
-        std::cerr << "PianoAligner::initialise: Failed to load score "
-		  << m_scoreName << std::endl;
+        cerr << "PianoAligner::initialise: Failed to load score "
+		  << m_scoreName << endl;
 	    return false;
     }
 }
@@ -460,7 +461,7 @@ PianoAligner::process(const float *const *inputBuffers, Vamp::RealTime timestamp
         m_firstFrameTime = timestamp; // 0.064000000R in simple-host; 0.000000000R in SV
         m_isFirstFrame = false;
         m_frameCount = 0;
-        std::cerr << "first frame time = "<<timestamp << '\n';
+        cerr << "first frame time = "<<timestamp << '\n';
     }
 
     int scale = 6; // hard-coded for now
@@ -568,25 +569,23 @@ PianoAligner::getRemainingFeatures()
     if (fabs(m_audioStart_sec - -1.) > .0000001) { // find the starting frame
         Vamp::RealTime t = Vamp::RealTime::fromSeconds(m_audioStart_sec);
         startFrame = Vamp::RealTime::realTime2Frame(t - m_firstFrameTime, m_inputSampleRate) / (128.*6.);
-        std::cerr<<"***Calculated starting frame is: "<<startFrame<<"; t="<<t<<std::endl;
+        cerr<<"***Calculated starting frame is: "<<startFrame<<"; t="<<t<<endl;
     }
 
     if (fabs(m_audioEnd_sec - -1.) > .0000001) { // find the ending frame
         Vamp::RealTime t = Vamp::RealTime::fromSeconds(m_audioEnd_sec);
         endFrame = Vamp::RealTime::realTime2Frame(t - m_firstFrameTime, m_inputSampleRate) / (128.*6.);
-        std::cerr<<"***Calculated ending frame is: "<<endFrame<<"; t="<<t<<"; m_frameCount="<<m_frameCount<<std::endl;
+        cerr<<"***Calculated ending frame is: "<<endFrame<<"; t="<<t<<"; m_frameCount="<<m_frameCount<<endl;
     }
 
     Score::MeasureInfo info = eventList[startEvent].measureInfo;
-    std::string label = to_string(info.measureNumber);
-    label += "+" + to_string(info.measurePosition.numerator) + "/" + to_string(info.measurePosition.denominator);
-    std::cerr<<"***Start label is: "<<label<<std::endl;
+    string label = info.toLabel();
+    cerr<<"***Start label is: "<<label<<endl;
     info = eventList[endEvent].measureInfo;
-    label = to_string(info.measureNumber);
-    label += "+" + to_string(info.measurePosition.numerator) + "/" + to_string(info.measurePosition.denominator);
-    std::cerr<<"***End label is: "<<label<<std::endl;
-    std::cerr<<"***Start frame is: "<<startFrame<<"; start second = "<<m_audioStart_sec<<"; m_firstFrameTime = "<<m_firstFrameTime<<std::endl;
-    std::cerr<<"***End frame is: "<<endFrame<<"; end second = "<<m_audioEnd_sec<<std::endl;
+    label = info.toLabel();
+    cerr<<"***End label is: "<<label<<endl;
+    cerr<<"***Start frame is: "<<startFrame<<"; start second = "<<m_audioStart_sec<<"; m_firstFrameTime = "<<m_firstFrameTime<<endl;
+    cerr<<"***End frame is: "<<endFrame<<"; end second = "<<m_audioEnd_sec<<endl;
     m_aligner->setAlignmentConstraints(startEvent, endEvent, startFrame, endFrame);
 
     // Window version:
@@ -597,13 +596,11 @@ PianoAligner::getRemainingFeatures()
         Feature feature;
         feature.hasTimestamp = true;
         feature.timestamp = m_firstFrameTime + Vamp::RealTime::frame2RealTime(frame*(128.*6.), m_inputSampleRate);
-        std::cerr <<"event="<<event<< ", real time = "<<feature.timestamp << '\n';
+        cerr <<"event="<<event<< ", real time = "<<feature.timestamp << '\n';
         Score::MeasureInfo info = eventList[event].measureInfo;
         // Calculate label:
-        feature.label = to_string(info.measureNumber);
-        feature.label += "+" + to_string(info.measurePosition.numerator) + "/" + to_string(info.measurePosition.denominator);
-        
-        std::cerr<<"***TICKS: "<<feature.label<<" -> "<<eventList[event].tick<<std::endl;
+        feature.label = info.toLabel();
+        cerr<<"***TICKS: "<<feature.label<<" -> "<<eventList[event].tick<<endl;
         feature.values.push_back(eventList[event].tick);
         featureSet[3].push_back(feature);
         frames.push_back(frame); // this feature not used?
@@ -620,7 +617,7 @@ PianoAligner::getRemainingFeatures()
             Feature feature;
             feature.hasTimestamp = true;
             feature.timestamp = m_firstFrameTime + Vamp::RealTime::frame2RealTime(frame, m_inputSampleRate/(128.*6.));
-            std::cout <<"real time = "<< feature.timestamp << '\n';
+            cout <<"real time = "<< feature.timestamp << '\n';
             feature.label = to_string(result);
             featureSet[3].push_back(feature);
             currentEvent = result;
@@ -656,7 +653,7 @@ PianoAligner::getRemainingFeatures()
         }
     }
     double range = max-min; // Shouldn't be zero, but need to check
-    std::cout << "max = "<<max<<", min="<<min << '\n';
+    cout << "max = "<<max<<", min="<<min << '\n';
     for (const auto& spectrum: m_aligner->getDataFeatures()) {
         Feature feature;
         feature.hasTimestamp = false;
@@ -673,28 +670,28 @@ PianoAligner::getRemainingFeatures()
 
     //Testing note templates:
 /*
-    std::cout<<"m_blockSize = "<<(m_blockSize / 2)<<"\n";
+    cout<<"m_blockSize = "<<(m_blockSize / 2)<<"\n";
     NoteTemplates t = CreateNoteTemplates::getNoteTemplates(
         m_inputSampleRate, m_blockSize);
     for (auto &pair : t) {
         int midi = pair.first;
         Template &spect = pair.second;
-        std::cout<<"### MIDI: "<<midi<<" ###"<<"\n";
+        cout<<"### MIDI: "<<midi<<" ###"<<"\n";
         for (auto value: spect) {
-            std::cout<<value<<",";
+            cout<<value<<",";
         }
-        std::cout<<"\n";
+        cout<<"\n";
     }
 */
 /*
     //Testing event templates:
     int index = 1;
     for (const auto &event: m_aligner->getScore().getMusicalEvents()) {
-        std::cout<<"### Event: "<<index<<" ###"<<"\n";
+        cout<<"### Event: "<<index<<" ###"<<"\n";
         for (const auto &value: event.eventTemplate) {
-            std::cout<<value<<",";
+            cout<<value<<",";
         }
-        std::cout<<"\n";
+        cout<<"\n";
         index++;
     }
 */
