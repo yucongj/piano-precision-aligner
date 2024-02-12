@@ -17,8 +17,6 @@ PianoAligner::PianoAligner(float inputSampleRate) :
     Plugin(inputSampleRate),
     m_aligner(nullptr),
     m_blockSize(0),
-    m_scorePositionStart(-1.f),
-    m_scorePositionEnd(-1.f),
     m_scorePositionStart_numerator(-1.f),
     m_scorePositionStart_denominator(-1.f),
     m_scorePositionEnd_numerator(-1.f),
@@ -131,26 +129,6 @@ PianoAligner::getParameterDescriptors() const
 
     ParameterDescriptor d;
 
-    d.identifier = "score-position-start";
-    d.name = "Score Position - Start";
-    d.description = "";
-    d.unit = "";
-    d.minValue = -1.f;
-    d.maxValue = 100000.f;
-    d.defaultValue = -1.f;
-    d.isQuantized = false;
-    list.push_back(d);
-
-    d.identifier = "score-position-end";
-    d.name = "Score Position - End";
-    d.description = "";
-    d.unit = "";
-    d.minValue = -1.f;
-    d.maxValue = 100000.f;
-    d.defaultValue = -1.f;
-    d.isQuantized = false;
-    list.push_back(d);
-
     d.identifier = "score-position-start-numerator";
     d.name = "Score Position - Start - Numerator";
     d.description = "";
@@ -172,7 +150,7 @@ PianoAligner::getParameterDescriptors() const
     list.push_back(d);
 
     d.identifier = "score-position-end-numerator";
-    d.name = "Score Position - End - numerator";
+    d.name = "Score Position - End - Numerator";
     d.description = "";
     d.unit = "";
     d.minValue = -1.f;
@@ -217,11 +195,7 @@ PianoAligner::getParameterDescriptors() const
 float
 PianoAligner::getParameter(string identifier) const
 {
-    if (identifier == "score-position-start") {
-        return m_scorePositionStart;
-    } else if (identifier == "score-position-end") {
-        return m_scorePositionEnd;
-    } else if (identifier == "score-position-start-numerator") {
+    if (identifier == "score-position-start-numerator") {
         return m_scorePositionStart_numerator;
     } else if (identifier == "score-position-start-denominator") {
         return m_scorePositionStart_denominator;
@@ -240,11 +214,7 @@ PianoAligner::getParameter(string identifier) const
 void
 PianoAligner::setParameter(string identifier, float value)
 {
-    if (identifier == "score-position-start") {
-        m_scorePositionStart = value;
-    } else if (identifier == "score-position-end") {
-        m_scorePositionEnd = value;
-    } else if (identifier == "score-position-start-numerator") {
+    if (identifier == "score-position-start-numerator") {
         m_scorePositionStart_numerator = value;
     } else if (identifier == "score-position-start-denominator") {
         m_scorePositionStart_denominator = value;
@@ -405,11 +375,6 @@ PianoAligner::initialise(size_t channels, size_t stepSize, size_t blockSize)
     }
 
     m_isFirstFrame = true;
-
-    cerr << "PianoAligner::initialise: score position start = "
-              << m_scorePositionStart << ", end = " << m_scorePositionEnd
-              << ", audio start = " << m_audioStart_sec << ", end = "
-              << m_audioEnd_sec << endl;
     
     // Real initialisation work goes here!
 
@@ -528,24 +493,6 @@ PianoAligner::getRemainingFeatures()
     int endFrame = m_frameCount - 1;
     // Set alignment constraints through m_start/endEvent and m_start/endFrame
     int e = 0;
-    /*
-    if (fabs(m_scorePositionStart - -1.) > .0000001) { // find the starting event
-        float distance = fabs(m_scorePositionStart - eventList[e].tick);
-        while ( (e+1) < int(eventList.size()) && fabs(m_scorePositionStart - eventList[e+1].tick) < distance) {
-            e++;
-            distance = fabs(m_scorePositionStart - eventList[e].tick);
-        }
-        startEvent = e;
-    }
-    if (fabs(m_scorePositionEnd - -1.) > .0000001) { // find the ending event
-        float distance = fabs(m_scorePositionEnd - eventList[e].tick);
-        while ( (e+1) < int(eventList.size()) && fabs(m_scorePositionEnd - eventList[e+1].tick) < distance) {
-            e++;
-            distance = fabs(m_scorePositionEnd - eventList[e].tick);
-        }
-        endEvent = e;
-    }
-    */
 
     if (fabs(m_scorePositionStart_numerator - -1.) > .0000001) { // find the starting event
         Fraction target = Fraction(m_scorePositionStart_numerator, m_scorePositionStart_denominator);
@@ -600,10 +547,9 @@ PianoAligner::getRemainingFeatures()
         Score::MeasureInfo info = eventList[event].measureInfo;
         // Calculate label:
         feature.label = info.toLabel();
-        cerr<<"***TICKS: "<<feature.label<<" -> "<<eventList[event].tick<<endl;
-        feature.values.push_back(eventList[event].tick);
+        feature.values.push_back(feature.timestamp.sec + feature.timestamp.msec() / 1000.);
         featureSet[3].push_back(feature);
-        frames.push_back(frame); // this feature not used?
+        frames.push_back(frame); // this value currently is not used anywhere, just for debugging.
         event++;
     }
 

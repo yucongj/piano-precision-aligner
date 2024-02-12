@@ -56,8 +56,6 @@ protected:
 
     // Constraints for partial alignments. In each case a value of -1
     // indicates no constraint of that type. The defaults are all -1.
-    float m_scorePositionStart;
-    float m_scorePositionEnd;
     float m_scorePositionStart_numerator;
     float m_scorePositionStart_denominator;
     float m_scorePositionEnd_numerator;

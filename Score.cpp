@@ -242,41 +242,6 @@ bool Score::readMeter(string meterFilePath)
     return true;
 }
 
-void Score::calculateTicks()
-{
-    int lastChange = 0; // last event index that defines a new tempo
-    float lastChangeTick = 0; // tick for the last event that defines a new tempo
-    float lastTempo = 0; // will be set in the for loop below
-    float currentTick = -1; // will be set in the first iteration
-
-    for (int event = 0; event < int(m_musicalEvents.size()); event++) {
-        Score::MeasureInfo info = m_musicalEvents[event].measureInfo;
-        
-        // Calculate tick:
-        // TODO: check divide-by-zero for eventList[event].temp and info.measureFraction.denominator
-        if (event == 0) {
-            lastTempo = m_musicalEvents[0].tempo;
-            currentTick = info.measureFraction.numerator * 2000. * (120. / lastTempo) 
-            / info.measureFraction.denominator; // in case the first event is e.g., 1+1/8 in stead of 1+0/1
-            lastChangeTick = currentTick;
-        } else {
-            float currentTempo = m_musicalEvents[event].tempo;
-            Fraction duration = info.measureFraction - m_musicalEvents[lastChange].measureInfo.measureFraction;
-            currentTick = lastChangeTick + duration.numerator * 2000. * (120. / lastTempo) / duration.denominator;
-            if (abs(currentTempo - lastTempo) > 0.001) { // encountering a tempo change
-                lastTempo = currentTempo;
-                lastChange = event;
-                lastChangeTick = currentTick;
-            }
-        }
-        //string label = to_string(info.measureNumber);
-        //label += "+" + to_string(info.measurePosition.numerator) + "/" + to_string(info.measurePosition.denominator);
-        //cerr<<"***Score ticks: "<<label<<" -> "<<currentTick<<endl;
-        // feature.values.push_back(info.measureFraction.numerator * 2000 / info.measureFraction.denominator);
-        m_musicalEvents[event].tick = currentTick;
-    }
-}
-
 ostream& operator<<(ostream &strm, const Fraction &f) {
    return strm << to_string(f.numerator) << "/" << to_string(f.denominator);
 }

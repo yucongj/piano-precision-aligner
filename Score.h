@@ -136,7 +136,6 @@ public:
         float tempo; // e.g., Quarter note = 120.0
         int meterNumer; // e.g., 3
         int meterDenom; // e.g., 4
-        float tick; // hope to get rid of this in the future
 
         MusicalEvent(MeasureInfo mi) : measureInfo{mi} { }
     };
@@ -168,7 +167,6 @@ public:
     bool initialize(std::string scoreFilePath);
     bool readTempo(std::string tempoFilePath);
     bool readMeter(std::string meterFilePath);
-    void calculateTicks();
 
     const MusicalEventList& getMusicalEvents() const;
 

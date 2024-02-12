@@ -46,7 +46,6 @@ bool AudioToScoreAligner::loadAScore(string scoreName, int blockSize)
     bool success = m_score.initialize(scorePath);
     if (success)    success = m_score.readTempo(scoreTempoPath);
     if (success)    success = m_score.readMeter(scoreMeterPath);
-    if (success)    m_score.calculateTicks();
 
     NoteTemplates t =
         CreateNoteTemplates::getNoteTemplates(m_inputSampleRate, blockSize);
