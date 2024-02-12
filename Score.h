@@ -133,7 +133,7 @@ public:
         std::vector<Note> notes;
         Template eventTemplate;
         Fraction duration;
-        float tempo; // e.g., Quarter note = 120.0
+        float tempo { 120. }; // e.g., Quarter note = 120.0
         int meterNumer; // e.g., 3
         int meterDenom; // e.g., 4
 

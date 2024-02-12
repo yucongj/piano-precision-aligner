@@ -103,7 +103,7 @@ bool Score::initialize(string scoreFilePath)
     return true;
 }
 
-
+// This method is not currently used anywhere
 // Read in the tempo information and assign a tempo value for each event in MusicalEvent
 bool Score::readTempo(string tempoFilePath)
 {

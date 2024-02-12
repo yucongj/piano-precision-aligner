@@ -40,11 +40,9 @@ bool AudioToScoreAligner::loadAScore(string scoreName, int blockSize)
 
     // Paths::getScores() has already verified that these exist
     string scorePath = targetPath.string() + "/" + scoreName + ".solo";
-    string scoreTempoPath = targetPath.string() + "/" + scoreName + ".tempo";
     string scoreMeterPath = targetPath.string() + "/" + scoreName + ".meter";
 
     bool success = m_score.initialize(scorePath);
-    if (success)    success = m_score.readTempo(scoreTempoPath);
     if (success)    success = m_score.readMeter(scoreMeterPath);
 
     NoteTemplates t =

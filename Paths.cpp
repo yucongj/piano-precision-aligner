@@ -76,10 +76,10 @@ Paths::getScores()
                 continue;
             }
 
-            path tempoFile(candidate.string() + "/" + name + ".tempo");
-            if (!exists(tempoFile)) {
+            path meterFile(candidate.string() + "/" + name + ".meter");
+            if (!exists(meterFile)) {
                 cerr << "WARNING: Candidate score folder "
-                     << candidate << " lacks " << name << ".tempo file"
+                     << candidate << " lacks " << name << ".meter file"
                      << endl;
                 continue;
             }

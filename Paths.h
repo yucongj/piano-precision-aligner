@@ -28,11 +28,11 @@ public:
     /**
      * Return a list of scores found in the score directories. Each
      * score is also a directory, containing (at least) .solo and
-     * .tempo files. The returned value maps from score name to score
+     * .meter files. The returned value maps from score name to score
      * directory.
      *
      * This function only returns scores whose directories exist and
-     * contain appropriately-named .solo and .tempo files.
+     * contain appropriately-named .solo and .meter files.
      *
      * If more than one of the score directories contains a score with
      * a given name, the first one found takes priority.
