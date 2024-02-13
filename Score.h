@@ -88,8 +88,8 @@ public:
     struct MeasureInfo
     {
         int measureNumber;
-        Fraction measurePosition;
-        Fraction measureFraction; // sometimes with a dummy value
+        Fraction measurePosition; // position within the measure
+        Fraction measureFraction; // cumulative fraction in the entire piece
 
         MeasureInfo(int mn, Fraction mp, Fraction mf): measureNumber{mn},
          measurePosition{mp}, measureFraction{mf} { }

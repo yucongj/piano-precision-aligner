@@ -547,7 +547,7 @@ PianoAligner::getRemainingFeatures()
         Score::MeasureInfo info = eventList[event].measureInfo;
         // Calculate label:
         feature.label = info.toLabel();
-        feature.values.push_back(feature.timestamp.sec + feature.timestamp.msec() / 1000.);
+        feature.values.push_back(info.measureFraction.getValue());
         featureSet[3].push_back(feature);
         frames.push_back(frame); // this value currently is not used anywhere, just for debugging.
         event++;
