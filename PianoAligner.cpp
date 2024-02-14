@@ -337,7 +337,7 @@ PianoAligner::getOutputDescriptors() const
     d.description = "Chord onsets by the dummy plugin";
     d.unit = "";
     d.hasFixedBinCount = true;
-    d.binCount = 1;
+    d.binCount = 0;
     d.hasKnownExtents = false;
     d.isQuantized = false;
     d.sampleType = OutputDescriptor::VariableSampleRate;
@@ -547,7 +547,7 @@ PianoAligner::getRemainingFeatures()
         Score::MeasureInfo info = eventList[event].measureInfo;
         // Calculate label:
         feature.label = info.toLabel();
-        feature.values.push_back(info.measureFraction.getValue());
+        // feature.values.push_back(info.measureFraction.getValue());
         featureSet[3].push_back(feature);
         frames.push_back(frame); // this value currently is not used anywhere, just for debugging.
         event++;
