@@ -100,6 +100,18 @@ bool Score::initialize(string scoreFilePath)
             currentEvent.notes.push_back(Note(true, midi, noteId));
     }
 
+    // Deleting events with only out notes
+    MusicalEventList musicalEvents;
+    for (auto event : m_musicalEvents) {
+        if (event.notes.size() != 0)    {
+            musicalEvents.push_back(event);
+            // cerr<<"#Notes in this event: "<<event.notes.size()<<"\t"<< event.measureInfo.toLabel()<<"\n";
+        } else {
+            cerr<<"INFO: No notes in this event "<<event.measureInfo.toLabel()<<"\n";
+        }
+    }
+    m_musicalEvents = musicalEvents;
+
     return true;
 }
 
