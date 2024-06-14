@@ -277,6 +277,10 @@ void Score::setEventTemplates(NoteTemplates& t)
         event.eventTemplate.resize(bins, 0);
         for (const auto &note: event.notes) {
             int midi = note.midiNumber;
+            if (midi > 108 || midi < 21) {
+                cerr << "Score::setEventTemplates: midi out of range." << '\n';
+                return;
+            }
             for (int k = 0; k < bins; k++) {
                 event.eventTemplate[k] += t[midi][k];
             }
