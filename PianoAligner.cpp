@@ -332,9 +332,9 @@ PianoAligner::getOutputDescriptors() const
     list.push_back(d);
 
     // Onsets:
-    d.identifier = "chordonsets";
-    d.name = "Chord Onsets";
-    d.description = "Chord onsets by the dummy plugin";
+    d.identifier = "audio-to-score-alignment";
+    d.name = "Audio-to-score Alignment";
+    d.description = "Audio-to-score alignment result by the plugin";
     d.unit = "";
     d.hasFixedBinCount = true;
     d.binCount = 0;
